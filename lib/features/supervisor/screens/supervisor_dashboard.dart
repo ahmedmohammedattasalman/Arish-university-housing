@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../features/auth/providers/auth_provider.dart';
+import '../../../features/auth/screens/profile_screen.dart';
+import '../../../core/widgets/language_toggle_button.dart';
 
 class SupervisorDashboard extends StatefulWidget {
   const SupervisorDashboard({Key? key}) : super(key: key);
@@ -28,6 +30,8 @@ class _SupervisorDashboardState extends State<SupervisorDashboard> {
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Supervisor Dashboard'),
@@ -35,8 +39,9 @@ class _SupervisorDashboardState extends State<SupervisorDashboard> {
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
+            tooltip: 'Logout',
             onPressed: () {
-              Provider.of<AuthProvider>(context, listen: false).signOut();
+              authProvider.signOut();
             },
           ),
         ],
@@ -68,6 +73,7 @@ class _SupervisorDashboardState extends State<SupervisorDashboard> {
           ),
         ],
       ),
+      floatingActionButton: const LanguageToggleFAB(),
     );
   }
 }
@@ -308,11 +314,6 @@ class ProfilePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Text(
-        'Profile Page',
-        style: AppTheme.headlineMedium,
-      ),
-    );
+    return const ProfileScreen();
   }
 }

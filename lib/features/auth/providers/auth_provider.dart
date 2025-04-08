@@ -64,13 +64,17 @@ class AuthProvider extends ChangeNotifier {
               email: _user!.email ?? '',
               role: _role ?? '',
             );
+
+            _status = AuthStatus.authenticated;
           } else if (cachedAuthState != null) {
             // Use cached data if no server data
             _role = cachedAuthState['user_role'] as String?;
+            _status = AuthStatus.authenticated;
           } else {
-            _role = '';
+            // Fallback to metadata if no cached data
+            _role = _user?.userMetadata?['role'] as String? ?? '';
+            _status = AuthStatus.authenticated;
           }
-          _status = AuthStatus.authenticated;
         } catch (e) {
           debugPrint('Error fetching user profile: $e');
 
@@ -78,7 +82,8 @@ class AuthProvider extends ChangeNotifier {
           if (cachedAuthState != null) {
             _role = cachedAuthState['user_role'] as String?;
           } else {
-            _role = '';
+            // Fallback to metadata if no cached data
+            _role = _user?.userMetadata?['role'] as String? ?? '';
           }
           _status = AuthStatus.authenticated;
         }
@@ -152,7 +157,7 @@ class AuthProvider extends ChangeNotifier {
 
       if (_user != null) {
         try {
-          // Get or create user profile
+          // Get user profile
           final userData = await _supabaseService.getUserProfile(_user!.id);
 
           if (userData != null) {
@@ -165,21 +170,8 @@ class AuthProvider extends ChangeNotifier {
               email: _user!.email ?? '',
               role: _role ?? '',
             );
-
-            // Check if we need to update the profile with any missing data
-            if (userData['email'] == null || userData['role'] == null) {
-              // Update the profile with complete information
-              await _supabaseService.client
-                  .from(AppConstants.usersCollection)
-                  .upsert({
-                'id': _user!.id,
-                'email': _user!.email,
-                'role': _role,
-                'updated_at': DateTime.now().toIso8601String(),
-              });
-            }
           } else {
-            // Something went wrong with profile retrieval or creation
+            // Something went wrong with profile retrieval
             _role = 'unknown';
             debugPrint('No user profile data returned after login');
           }
@@ -188,9 +180,10 @@ class AuthProvider extends ChangeNotifier {
           _safeNotifyListeners();
           return true;
         } catch (e) {
-          debugPrint('Error getting/creating user profile: $e');
+          debugPrint('Error getting user profile: $e');
           // Still consider login successful even if profile fetch fails
-          _role = 'unknown';
+          // Get role from user metadata as fallback
+          _role = _user?.userMetadata?['role'] as String? ?? 'unknown';
           _status = AuthStatus.authenticated;
           _safeNotifyListeners();
           return true;
@@ -229,35 +222,57 @@ class AuthProvider extends ChangeNotifier {
     _safeNotifyListeners();
 
     try {
-      // Step 1: Sign up with Supabase Auth
+      // Separate auth metadata from profile data
+      final authMetadata = {
+        'role': role,
+        'full_name': userData['full_name'],
+        'phone': userData['phone'],
+      };
+
+      // Remove non-essential fields from profile data
+      final profileData = Map<String, dynamic>.from(userData);
+
+      // Step 1: Sign up with Supabase Auth with user metadata
       final response = await _supabaseService.signUp(
         email: email,
         password: password,
         role: role,
+        userMetadata: authMetadata,
       );
 
       _user = response.user;
 
       if (_user != null) {
+        // Store user data locally
+        _role = role;
+
+        // Save auth state
+        await LocalStorageService.saveAuthState(
+          userId: _user!.id,
+          email: email,
+          role: role,
+        );
+
+        // Add essential fields to profile data
+        profileData['id'] = _user!.id;
+        profileData['email'] = email;
+        profileData['user_role'] = role;
+        profileData['created_at'] = DateTime.now().toIso8601String();
+
+        // Try to create profile in the database
         try {
-          // Step 2: Create user profile in database with additional data
           await _supabaseService.client
-              .from(AppConstants.usersCollection)
-              .insert({
-            'id': _user!.id,
-            'email': email,
-            'role': role,
-            ...userData,
-            'created_at': DateTime.now().toIso8601String(),
-          });
+              .from(AppConstants.profilesCollection)
+              .insert(profileData);
         } catch (e) {
-          // If we can't create the profile but the auth account was created,
-          // still consider the registration successful but log the error
-          debugPrint('Error creating user profile: $e');
+          debugPrint('Error creating profile: $e');
+          // We'll continue even if this fails, since the profile will be created
+          // on first login via getUserProfile
         }
 
-        // Even if profile creation failed, the auth account exists
-        _role = role;
+        // Save user profile locally
+        await LocalStorageService.saveUserProfile(profileData);
+
         _status = AuthStatus.authenticated;
         _safeNotifyListeners();
         return true;
@@ -322,13 +337,15 @@ class AuthProvider extends ChangeNotifier {
             email: _user!.email ?? '',
             role: _role ?? '',
           );
+
+          _safeNotifyListeners();
         }
       }
     } catch (e) {
-      _errorMessage = e.toString();
+      debugPrint('Error refreshing user: $e');
+      _errorMessage = 'Error refreshing user data: ${e.toString()}';
+      _safeNotifyListeners();
     }
-
-    _safeNotifyListeners();
   }
 
   Future<bool> resendConfirmationEmail(String email) async {

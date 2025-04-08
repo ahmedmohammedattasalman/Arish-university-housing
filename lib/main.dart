@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'core/services/supabase_service.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/providers/auth_provider.dart';
 import 'features/auth/screens/auth_wrapper.dart';
+import 'core/localization/app_localizations.dart';
+import 'core/localization/language_provider.dart';
 
 void main() {
   // This must be called before any other Flutter code
@@ -111,17 +114,35 @@ class ErrorApp extends StatelessWidget {
   }
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  final LanguageProvider _languageProvider = LanguageProvider();
+
+  @override
+  void initState() {
+    super.initState();
+    _initLanguage();
+  }
+
+  Future<void> _initLanguage() async {
+    await _languageProvider.initLanguage();
+  }
 
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider.value(value: _languageProvider),
       ],
-      child: Consumer<AuthProvider>(
-        builder: (context, authProvider, _) {
+      child: Consumer2<AuthProvider, LanguageProvider>(
+        builder: (context, authProvider, languageProvider, _) {
           // Get the appropriate theme based on user role
           ThemeData theme = AppTheme.lightTheme;
           if (authProvider.status == AuthStatus.authenticated &&
@@ -133,6 +154,21 @@ class MyApp extends StatelessWidget {
             title: 'University Housing',
             theme: theme,
             debugShowCheckedModeBanner: false,
+            locale: languageProvider.locale,
+            supportedLocales: AppLocalizations.supportedLocales,
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            localeResolutionCallback: AppLocalizations.localeResolutionCallback,
+            builder: (context, child) {
+              return Directionality(
+                textDirection: languageProvider.textDirection,
+                child: child!,
+              );
+            },
             home: const AuthWrapper(),
           );
         },

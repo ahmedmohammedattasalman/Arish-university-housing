@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../features/auth/providers/auth_provider.dart';
+import '../../../features/auth/screens/profile_screen.dart';
+import '../../../core/widgets/language_toggle_button.dart';
 
 class LaborDashboard extends StatefulWidget {
   const LaborDashboard({Key? key}) : super(key: key);
@@ -28,6 +30,8 @@ class _LaborDashboardState extends State<LaborDashboard> {
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Maintenance Dashboard'),
@@ -35,8 +39,9 @@ class _LaborDashboardState extends State<LaborDashboard> {
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
+            tooltip: 'Logout',
             onPressed: () {
-              Provider.of<AuthProvider>(context, listen: false).signOut();
+              authProvider.signOut();
             },
           ),
         ],
@@ -68,6 +73,7 @@ class _LaborDashboardState extends State<LaborDashboard> {
           ),
         ],
       ),
+      floatingActionButton: const LanguageToggleFAB(),
     );
   }
 }
@@ -449,11 +455,6 @@ class ProfilePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Text(
-        'Profile Page',
-        style: AppTheme.headlineMedium,
-      ),
-    );
+    return const ProfileScreen();
   }
 }

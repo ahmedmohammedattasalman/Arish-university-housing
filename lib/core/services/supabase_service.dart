@@ -1,6 +1,8 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/material.dart';
 import '../config/constants.dart';
+import 'package:provider/provider.dart';
+import '../localization/language_provider.dart';
 
 class SupabaseService {
   late final SupabaseClient _client;
@@ -59,22 +61,98 @@ class SupabaseService {
     return _client;
   }
 
+  // Insert data with proper encoding for Arabic text
+  Future<dynamic> insertData(String tableName, Map<String, dynamic> data,
+      {BuildContext? context}) async {
+    try {
+      // Ensure data is properly encoded for Arabic if the app is in Arabic mode
+      if (context != null) {
+        final isArabic =
+            Provider.of<LanguageProvider>(context, listen: false).isArabic;
+        if (isArabic) {
+          // No need to manually encode as Supabase handles UTF-8 properly
+          // This is just a hook in case we need to do any special processing in the future
+        }
+      }
+
+      final response = await _client.from(tableName).insert(data).select();
+      return response;
+    } catch (e) {
+      debugPrint('Error inserting data: $e');
+      rethrow;
+    }
+  }
+
+  // Update data with proper encoding for Arabic text
+  Future<dynamic> updateData(
+      String tableName, String id, Map<String, dynamic> data,
+      {BuildContext? context}) async {
+    try {
+      // Ensure data is properly encoded for Arabic if the app is in Arabic mode
+      if (context != null) {
+        final isArabic =
+            Provider.of<LanguageProvider>(context, listen: false).isArabic;
+        if (isArabic) {
+          // No need to manually encode as Supabase handles UTF-8 properly
+          // This is just a hook in case we need to do any special processing in the future
+        }
+      }
+
+      final response =
+          await _client.from(tableName).update(data).eq('id', id).select();
+      return response;
+    } catch (e) {
+      debugPrint('Error updating data: $e');
+      rethrow;
+    }
+  }
+
+  // Handle non-ASCII characters properly in query filters
+  Future<dynamic> queryWithFilter(String tableName, String column, String value,
+      {BuildContext? context}) async {
+    try {
+      // Ensure filter value is properly encoded for Arabic if needed
+      if (context != null) {
+        final isArabic =
+            Provider.of<LanguageProvider>(context, listen: false).isArabic;
+        if (isArabic && value.contains(RegExp(r'[\u0600-\u06FF]'))) {
+          // Arabic text detected, ensure proper handling
+          // Supabase handles UTF-8 correctly, but this is a hook point for future needs
+        }
+      }
+
+      final response =
+          await _client.from(tableName).select().ilike(column, '%$value%');
+      return response;
+    } catch (e) {
+      debugPrint('Error querying with filter: $e');
+      rethrow;
+    }
+  }
+
   // Authentication methods
   Future<AuthResponse> signUp(
       {required String email,
       required String password,
-      required String role}) async {
+      required String role,
+      Map<String, dynamic>? userMetadata}) async {
     if (!_isInitialized) {
       throw Exception(
           'Supabase client not initialized. Call initialize() first.');
     }
 
     try {
-      // Sign up using Supabase Auth without autoConfirm
+      // Prepare metadata with role and any additional fields
+      final metadata = {
+        'role': role,
+        ...?userMetadata, // Merge additional metadata if provided
+      };
+
+      // Sign up using Supabase Auth
       final response = await _client.auth.signUp(
         email: email,
         password: password,
-        data: {'role': role},
+        data: metadata,
       );
 
       return response;
@@ -115,70 +193,211 @@ class SupabaseService {
 
   Future<Map<String, dynamic>?> getUserProfile(String userId) async {
     try {
-      // First check if the table exists and if the user exists in it
-      final response = await _client
-          .from(AppConstants.usersCollection)
-          .select('id')
-          .eq('id', userId);
+      // Get user from auth
+      final user = _client.auth.currentUser;
 
-      // If the user doesn't exist in the database, return a basic profile with role
-      if (response.isEmpty) {
-        // Get user metadata from auth
-        final user = _client.auth.currentUser;
-        if (user != null && user.id == userId) {
-          // Create a basic profile with data from auth metadata
-          final role = user.userMetadata?['role'] as String? ?? 'student';
+      if (user != null && user.id == userId) {
+        // Create a basic profile with data from auth metadata
+        final role = user.userMetadata?['role'] as String? ?? 'student';
+        final email = user.email ?? '';
+        final fullName = user.userMetadata?['full_name'] as String? ?? '';
+        final phone = user.userMetadata?['phone'] as String? ?? '';
 
-          try {
-            // Try to create the user profile
-            await _client.from(AppConstants.usersCollection).insert({
-              'id': userId,
-              'email': user.email,
-              'role': role,
-              'created_at': DateTime.now().toIso8601String(),
-            });
+        // Try to fetch profile data from the profiles table
+        try {
+          // First check if user exists directly with a simple query
+          final List<dynamic> response = await _client
+              .from(AppConstants.profilesCollection)
+              .select('id')
+              .eq('id', userId)
+              .limit(1);
 
-            // Return the newly created profile
+          if (response.isNotEmpty) {
+            // User exists, fetch full profile
+            final profileData = await _client
+                .from(AppConstants.profilesCollection)
+                .select('*')
+                .eq('id', userId)
+                .single();
+
+            // Merge auth data with profile data for consistent access
             return {
               'id': userId,
-              'email': user.email,
-              'role': role,
-              'created_at': DateTime.now().toIso8601String(),
-            };
-          } catch (e) {
-            debugPrint('Error creating user profile: $e');
-            // Still return basic info even if creation fails
-            return {
-              'id': userId,
-              'email': user.email ?? '',
-              'role': role,
+              'email': email,
+              'role': role, // From auth for consistent role usage in the app
+              'user_role':
+                  profileData['user_role'] ?? role, // From profile table
+              'full_name': profileData['full_name'] ?? fullName,
+              'phone': profileData['phone'] ?? phone,
+              'avatar_url':
+                  profileData['avatar_url'] ?? user.userMetadata?['avatar_url'],
+              'created_at': profileData['created_at'],
+              'updated_at': profileData['updated_at'],
+              // Include all additional fields
+              'student_id': profileData['student_id'],
+              'room_number': profileData['room_number'],
+              'program': profileData['program'],
+              'employee_id': profileData['employee_id'],
+              'department': profileData['department'],
+              'specialty': profileData['specialty'],
+              'position': profileData['position'],
+              'building_assigned': profileData['building_assigned'],
+              'dining_hall': profileData['dining_hall'],
+              'graduation_year': profileData['graduation_year'],
+              'enrollment_date': profileData['enrollment_date'],
+              'hire_date': profileData['hire_date'],
+              'shift_hours': profileData['shift_hours'],
+              'access_level': profileData['access_level'],
             };
           }
+
+          // Profile doesn't exist, create one
+          final Map<String, dynamic> newProfile = {
+            'id': userId,
+            'email': email,
+            'user_role': role,
+            'full_name': fullName,
+            'phone': phone,
+            'created_at': DateTime.now().toIso8601String(),
+          };
+
+          // Add role-specific fields from auth metadata if available
+          if (role == AppConstants.roleStudent) {
+            newProfile['student_id'] = user.userMetadata?['student_id'];
+            newProfile['room_number'] = user.userMetadata?['room_number'];
+            newProfile['program'] = user.userMetadata?['program'];
+          } else if (role == AppConstants.roleSupervisor ||
+              role == AppConstants.roleAdmin ||
+              role == AppConstants.roleLabor) {
+            newProfile['employee_id'] = user.userMetadata?['employee_id'];
+            newProfile['department'] = user.userMetadata?['department'];
+          }
+
+          // Insert the new profile
+          await _client
+              .from(AppConstants.profilesCollection)
+              .insert(newProfile);
+
+          // Return the newly created profile data
+          return {
+            'id': userId,
+            'email': email,
+            'role': role,
+            'user_role': role,
+            'full_name': fullName,
+            'phone': phone,
+            'created_at': DateTime.now().toIso8601String(),
+            // Other fields will be null until set
+          };
+        } catch (dbError) {
+          debugPrint('Error accessing profiles table: $dbError');
+
+          // Return basic user info from auth as fallback
+          return {
+            'id': userId,
+            'email': email,
+            'role': role,
+            'full_name': fullName,
+            'phone': phone,
+            'created_at': DateTime.now().toIso8601String(),
+          };
         }
-        return null;
       }
-
-      // If the user exists, get their full profile
-      final userProfile = await _client
-          .from(AppConstants.usersCollection)
-          .select()
-          .eq('id', userId)
-          .single();
-
-      return userProfile;
+      return null;
     } catch (e) {
       debugPrint('Error fetching user profile: $e');
 
       // If there's an error, try to get basic user info from auth as fallback
       final user = _client.auth.currentUser;
       if (user != null && user.id == userId) {
+        final role = user.userMetadata?['role'] as String? ?? 'student';
+        final email = user.email ?? '';
+        final fullName = user.userMetadata?['full_name'] as String? ?? '';
+        final phone = user.userMetadata?['phone'] as String? ?? '';
+
         return {
           'id': userId,
-          'email': user.email ?? '',
-          'role': user.userMetadata?['role'] as String? ?? 'student',
+          'email': email,
+          'role': role,
+          'full_name': fullName,
+          'phone': phone,
+          'created_at': DateTime.now().toIso8601String(),
         };
       }
       return null;
+    }
+  }
+
+  // Update method to handle our new table structure
+  Future<void> updateUserProfile(
+      String userId, Map<String, dynamic> profileData) async {
+    try {
+      // Remove any fields that don't exist in the profiles table
+      final Map<String, dynamic> validProfileData = {};
+      for (final key in profileData.keys) {
+        // Check if this is a valid column before including it
+        if ([
+          'id',
+          'email',
+          'full_name',
+          'avatar_url',
+          'user_role',
+          'phone',
+          'student_id',
+          'room_number',
+          'program',
+          'employee_id',
+          'department',
+          'specialty',
+          'position',
+          'building_assigned',
+          'dining_hall',
+          'graduation_year',
+          'enrollment_date',
+          'hire_date',
+          'shift_hours',
+          'access_level'
+        ].contains(key)) {
+          validProfileData[key] = profileData[key];
+        }
+      }
+
+      // Always include the updated_at timestamp
+      validProfileData['updated_at'] = DateTime.now().toIso8601String();
+
+      // Update profile in the database
+      await _client
+          .from(AppConstants.profilesCollection)
+          .update(validProfileData)
+          .eq('id', userId);
+
+      // Update metadata in auth if needed
+      final currentUser = _client.auth.currentUser;
+      if (currentUser != null && currentUser.id == userId) {
+        final Map<String, dynamic> metadata =
+            Map.from(currentUser.userMetadata ?? {});
+
+        // Update common metadata fields
+        if (profileData.containsKey('full_name')) {
+          metadata['full_name'] = profileData['full_name'];
+        }
+        if (profileData.containsKey('phone')) {
+          metadata['phone'] = profileData['phone'];
+        }
+        if (profileData.containsKey('avatar_url')) {
+          metadata['avatar_url'] = profileData['avatar_url'];
+        }
+
+        // Only update if there are changes
+        if (metadata.isNotEmpty) {
+          await _client.auth.updateUser(UserAttributes(
+            data: metadata,
+          ));
+        }
+      }
+    } catch (e) {
+      debugPrint('Error updating user profile: $e');
+      throw Exception('Failed to update profile: ${e.toString()}');
     }
   }
 

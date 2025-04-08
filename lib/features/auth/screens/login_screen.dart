@@ -1,35 +1,47 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_svg/svg.dart';
+import 'package:animate_do/animate_do.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/validators.dart';
-import '../../../core/widgets/custom_button.dart';
-import '../../../core/widgets/custom_text_field.dart';
 import '../providers/auth_provider.dart';
+import '../../../core/widgets/language_toggle_button.dart';
 
 class LoginScreen extends StatefulWidget {
   final VoidCallback onSignUpPressed;
 
   const LoginScreen({
-    Key? key,
+    super.key,
     required this.onSignUpPressed,
-  }) : super(key: key);
+  });
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginScreenState extends State<LoginScreen>
+    with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isPasswordVisible = false;
   bool _needsEmailVerification = false;
+  late AnimationController _animationController;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
+    _animationController.forward();
+  }
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _animationController.dispose();
     super.dispose();
   }
 
@@ -161,194 +173,472 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
     final isLoading = authProvider.status == AuthStatus.loading;
+    final screenSize = MediaQuery.of(context).size;
 
     return Scaffold(
-      backgroundColor: AppTheme.scaffoldBackgroundColor,
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24.0),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // University Logo
-                  Container(
-                    height: 120,
-                    width: 120,
-                    alignment: Alignment.center,
-                    child: Image.asset(
-                      'assets/images/university_logo.png',
-                      height: 120,
-                      fit: BoxFit.contain,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'University Housing',
-                    style: AppTheme.headlineMedium,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Sign in to continue',
-                    style: AppTheme.bodyLarge.copyWith(
-                      color: AppTheme.textSecondaryColor,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 40),
-
-                  // Email Field
-                  CustomTextField(
-                    label: 'Email',
-                    hint: 'Enter your email',
-                    controller: _emailController,
-                    keyboardType: TextInputType.emailAddress,
-                    textInputAction: TextInputAction.next,
-                    prefixIcon: Icons.email_outlined,
-                    validator: Validators.validateEmail,
-                    enabled: !isLoading,
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Password Field
-                  CustomTextField(
-                    label: 'Password',
-                    hint: 'Enter your password',
-                    controller: _passwordController,
-                    obscureText: !_isPasswordVisible,
-                    textInputAction: TextInputAction.done,
-                    prefixIcon: Icons.lock_outline,
-                    validator: Validators.validatePassword,
-                    enabled: !isLoading,
-                    suffix: IconButton(
-                      icon: Icon(
-                        _isPasswordVisible
-                            ? Icons.visibility_off_outlined
-                            : Icons.visibility_outlined,
-                        color: Colors.grey,
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppTheme.scaffoldBackgroundColor,
+              AppTheme.accentColor.withOpacity(0.15),
+            ],
+          ),
+        ),
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24.0),
+              child: FadeIn(
+                duration: const Duration(milliseconds: 800),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Language toggle button at the top
+                    Align(
+                      alignment: Alignment.topRight,
+                      child: Padding(
+                        padding: const EdgeInsets.only(bottom: 16.0),
+                        child: LanguageToggleButton(),
                       ),
-                      onPressed: _togglePasswordVisibility,
                     ),
-                  ),
-                  const SizedBox(height: 8),
-
-                  // Email Verification Message
-                  if (_needsEmailVerification)
-                    Container(
-                      margin: const EdgeInsets.only(bottom: 16, top: 8),
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.amber.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.amber),
+                    // University Logo with Animation
+                    FadeInDown(
+                      duration: const Duration(milliseconds: 800),
+                      delay: const Duration(milliseconds: 200),
+                      child: Container(
+                        height: 100,
+                        width: 100,
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white,
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppTheme.primaryColor.withOpacity(0.2),
+                              blurRadius: 15,
+                              offset: const Offset(0, 5),
+                            ),
+                          ],
+                        ),
+                        child: Image.asset(
+                          'assets/images/university_logo.png',
+                          fit: BoxFit.contain,
+                        ),
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Email not verified',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          const Text(
-                            'Please check your inbox for a verification email',
-                            style: TextStyle(fontSize: 12),
-                          ),
-                          const SizedBox(height: 8),
-                          TextButton(
-                            onPressed:
-                                isLoading ? null : _resendVerificationEmail,
-                            style: TextButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 16, vertical: 8),
-                              backgroundColor: Colors.amber,
-                            ),
-                            child: Text(
-                              'Resend Verification Email',
-                              style: AppTheme.bodySmall.copyWith(
-                                color: Colors.black87,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ],
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Welcome Text
+                    FadeInDown(
+                      duration: const Duration(milliseconds: 800),
+                      delay: const Duration(milliseconds: 300),
+                      child: Text(
+                        'University Housing',
+                        style: AppTheme.headlineMedium.copyWith(
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.5,
+                        ),
+                        textAlign: TextAlign.center,
                       ),
                     ),
 
-                  // Forgot Password
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      if (!_needsEmailVerification)
-                        const SizedBox.shrink()
-                      else
-                        TextButton(
-                          onPressed:
-                              isLoading ? null : _resendVerificationEmail,
-                          child: Text(
-                            'Resend Verification',
-                            style: AppTheme.bodyMedium.copyWith(
-                              color: Colors.amber[800],
-                              fontWeight: FontWeight.w600,
+                    FadeInDown(
+                      duration: const Duration(milliseconds: 800),
+                      delay: const Duration(milliseconds: 400),
+                      child: Text(
+                        'Welcome back',
+                        style: AppTheme.titleMedium.copyWith(
+                          color: AppTheme.textSecondaryColor,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+
+                    const SizedBox(height: 40),
+
+                    // Card Container for Login Form
+                    FadeInUp(
+                      duration: const Duration(milliseconds: 800),
+                      delay: const Duration(milliseconds: 500),
+                      child: Container(
+                        width: screenSize.width > 600 ? 500 : double.infinity,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 10,
+                              spreadRadius: 1,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(24.0),
+                          child: Form(
+                            key: _formKey,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                // Email Field
+                                FadeInUp(
+                                  duration: const Duration(milliseconds: 800),
+                                  delay: const Duration(milliseconds: 600),
+                                  child: _buildEmailField(isLoading),
+                                ),
+                                const SizedBox(height: 20),
+
+                                // Password Field
+                                FadeInUp(
+                                  duration: const Duration(milliseconds: 800),
+                                  delay: const Duration(milliseconds: 700),
+                                  child: _buildPasswordField(isLoading),
+                                ),
+                                const SizedBox(height: 8),
+
+                                // Email Verification Message
+                                if (_needsEmailVerification)
+                                  FadeInUp(
+                                    duration: const Duration(milliseconds: 400),
+                                    child: _buildVerificationBox(isLoading),
+                                  ),
+
+                                // Forgot Password
+                                FadeInUp(
+                                  duration: const Duration(milliseconds: 800),
+                                  delay: const Duration(milliseconds: 800),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    children: [
+                                      TextButton(
+                                        onPressed: isLoading
+                                            ? null
+                                            : () {
+                                                // TODO: Implement forgot password
+                                              },
+                                        style: TextButton.styleFrom(
+                                          foregroundColor:
+                                              AppTheme.primaryColor,
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 8, vertical: 4),
+                                        ),
+                                        child: Text(
+                                          'Forgot Password?',
+                                          style: AppTheme.bodyMedium.copyWith(
+                                            color: AppTheme.primaryColor,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 20),
+
+                                // Login Button
+                                FadeInUp(
+                                  duration: const Duration(milliseconds: 800),
+                                  delay: const Duration(milliseconds: 900),
+                                  child: _buildLoginButton(isLoading),
+                                ),
+
+                                // Divider
+                                FadeInUp(
+                                  duration: const Duration(milliseconds: 800),
+                                  delay: const Duration(milliseconds: 1000),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 24.0),
+                                    child: Row(
+                                      children: [
+                                        const Expanded(
+                                          child: Divider(
+                                            thickness: 1,
+                                            color: AppTheme.dividerColor,
+                                          ),
+                                        ),
+                                        Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 16.0),
+                                          child: Text(
+                                            'OR',
+                                            style: TextStyle(
+                                              color:
+                                                  AppTheme.textSecondaryColor,
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                        ),
+                                        const Expanded(
+                                          child: Divider(
+                                            thickness: 1,
+                                            color: AppTheme.dividerColor,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+
+                                // Sign Up Option
+                                FadeInUp(
+                                  duration: const Duration(milliseconds: 800),
+                                  delay: const Duration(milliseconds: 1100),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        "Don't have an account?",
+                                        style: AppTheme.bodyMedium,
+                                      ),
+                                      TextButton(
+                                        onPressed: isLoading
+                                            ? null
+                                            : widget.onSignUpPressed,
+                                        child: Text(
+                                          'Sign Up',
+                                          style: AppTheme.bodyMedium.copyWith(
+                                            color: AppTheme.primaryColor,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+
+                                const SizedBox(height: 8),
+
+                                // Terms and Policy
+                                FadeInUp(
+                                  duration: const Duration(milliseconds: 800),
+                                  delay: const Duration(milliseconds: 1200),
+                                  child: Text(
+                                    'By signing in, you agree to our Terms of Service and Privacy Policy',
+                                    style: AppTheme.bodySmall.copyWith(
+                                      color: AppTheme.textSecondaryColor,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ),
-                      TextButton(
-                        onPressed: isLoading
-                            ? null
-                            : () {
-                                // TODO: Implement forgot password
-                              },
-                        child: Text(
-                          'Forgot Password?',
-                          style: AppTheme.bodyMedium.copyWith(
-                            color: AppTheme.primaryColor,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Login Button
-                  CustomButton(
-                    text: 'Login',
-                    onPressed: isLoading ? () {} : _login,
-                    isLoading: isLoading,
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Sign Up Option
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        "Don't have an account?",
-                        style: AppTheme.bodyMedium,
-                      ),
-                      TextButton(
-                        onPressed: isLoading ? null : widget.onSignUpPressed,
-                        child: Text(
-                          'Sign Up',
-                          style: AppTheme.bodyMedium.copyWith(
-                            color: AppTheme.primaryColor,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmailField(bool isLoading) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Email',
+          style: AppTheme.titleMedium.copyWith(
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: _emailController,
+          validator: Validators.validateEmail,
+          keyboardType: TextInputType.emailAddress,
+          textInputAction: TextInputAction.next,
+          enabled: !isLoading,
+          style: AppTheme.bodyMedium,
+          decoration: InputDecoration(
+            hintText: 'Enter your email',
+            prefixIcon: const Icon(Icons.email_outlined),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: AppTheme.dividerColor),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: AppTheme.dividerColor),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide:
+                  const BorderSide(color: AppTheme.primaryColor, width: 2),
+            ),
+            filled: true,
+            fillColor: Colors.white,
+            contentPadding: const EdgeInsets.all(16),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPasswordField(bool isLoading) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Password',
+          style: AppTheme.titleMedium.copyWith(
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: _passwordController,
+          obscureText: !_isPasswordVisible,
+          validator: Validators.validatePassword,
+          textInputAction: TextInputAction.done,
+          enabled: !isLoading,
+          style: AppTheme.bodyMedium,
+          decoration: InputDecoration(
+            hintText: 'Enter your password',
+            prefixIcon: const Icon(Icons.lock_outline),
+            suffixIcon: IconButton(
+              icon: Icon(
+                _isPasswordVisible
+                    ? Icons.visibility_off_outlined
+                    : Icons.visibility_outlined,
+                color: Colors.grey,
+              ),
+              onPressed: _togglePasswordVisibility,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: AppTheme.dividerColor),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: AppTheme.dividerColor),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide:
+                  const BorderSide(color: AppTheme.primaryColor, width: 2),
+            ),
+            filled: true,
+            fillColor: Colors.white,
+            contentPadding: const EdgeInsets.all(16),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildVerificationBox(bool isLoading) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16, top: 8),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.amber.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.amber),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.warning_amber_rounded,
+                color: Colors.amber,
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Email not verified',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.amber[800],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Please check your inbox for a verification email',
+            style: TextStyle(fontSize: 14),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: isLoading ? null : _resendVerificationEmail,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.amber,
+                foregroundColor: Colors.black87,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              icon: const Icon(Icons.refresh, size: 18),
+              label: const Text(
+                'Resend Verification Email',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLoginButton(bool isLoading) {
+    return SizedBox(
+      width: double.infinity,
+      height: 54,
+      child: ElevatedButton(
+        onPressed: isLoading ? null : _login,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppTheme.primaryColor,
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          elevation: 2,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (isLoading)
+              Container(
+                width: 24,
+                height: 24,
+                margin: const EdgeInsets.only(right: 12),
+                child: const CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 2,
+                ),
+              )
+            else
+              const Icon(Icons.login_rounded, size: 22, color: Colors.white),
+            const SizedBox(width: 8),
+            Text(
+              isLoading ? 'Signing In...' : 'Sign In',
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 0.5,
+              ),
+            ),
+          ],
         ),
       ),
     );

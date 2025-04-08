@@ -14,6 +14,7 @@ class AppConstants {
   static const String roleRestaurant = 'restaurant';
 
   // Collection Names for Supabase
+  static const String profilesCollection = 'profiles';
   static const String usersCollection = 'users';
   static const String requestsCollection = 'requests';
   static const String attendanceCollection = 'attendance';
