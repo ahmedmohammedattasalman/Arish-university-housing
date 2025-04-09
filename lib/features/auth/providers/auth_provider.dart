@@ -55,7 +55,9 @@ class AuthProvider extends ChangeNotifier {
           // Try to get user profile from Supabase
           final userData = await _supabaseService.getUserProfile(_user!.id);
           if (userData != null) {
-            _role = userData['role'] as String? ?? '';
+            // Important: Use user_role from the profiles table, not role from metadata
+            _role = userData['user_role'] as String? ?? '';
+            debugPrint('Retrieved user_role from profile: $_role');
 
             // Save the user data to local storage
             await LocalStorageService.saveUserProfile(userData);
@@ -161,7 +163,9 @@ class AuthProvider extends ChangeNotifier {
           final userData = await _supabaseService.getUserProfile(_user!.id);
 
           if (userData != null) {
-            _role = userData['role'] as String? ?? '';
+            // Important: Use user_role from the profiles table
+            _role = userData['user_role'] as String? ?? '';
+            debugPrint('Retrieved user_role on login: $_role');
 
             // Save user data to local storage
             await LocalStorageService.saveUserProfile(userData);
@@ -335,18 +339,17 @@ class AuthProvider extends ChangeNotifier {
     _safeNotifyListeners();
 
     try {
-      // Clear local storage first
+      await _supabaseService.signOut();
       await LocalStorageService.clearAuthState();
       await LocalStorageService.clearUserProfile();
 
-      // Then sign out from Supabase
-      await _supabaseService.signOut();
       _user = null;
       _role = null;
       _status = AuthStatus.unauthenticated;
     } catch (e) {
+      debugPrint('Error signing out: $e');
+      _errorMessage = 'Failed to sign out: ${e.toString()}';
       _status = AuthStatus.error;
-      _errorMessage = e.toString();
     }
 
     _safeNotifyListeners();
@@ -387,6 +390,24 @@ class AuthProvider extends ChangeNotifier {
       _errorMessage = e.toString();
       _safeNotifyListeners();
       return false;
+    }
+  }
+
+  Future<void> refreshUserRole() async {
+    if (_user != null) {
+      try {
+        final userData = await _supabaseService.getUserProfile(_user!.id);
+        if (userData != null) {
+          final newRole = userData['user_role'] as String? ?? '';
+          if (_role != newRole) {
+            _role = newRole;
+            debugPrint('Updated user role to: $_role');
+            _safeNotifyListeners();
+          }
+        }
+      } catch (e) {
+        debugPrint('Error refreshing user role: $e');
+      }
     }
   }
 }

@@ -22,6 +22,7 @@ class AuthWrapper extends StatefulWidget {
 
 class _AuthWrapperState extends State<AuthWrapper> {
   AuthScreenType _currentScreenType = AuthScreenType.login;
+  bool _isRefreshing = false;
 
   void _toggleScreen() {
     if (mounted) {
@@ -34,11 +35,37 @@ class _AuthWrapperState extends State<AuthWrapper> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    // Schedule refresh role check after build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _refreshUserRole();
+    });
+  }
+
+  Future<void> _refreshUserRole() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    if (authProvider.status == AuthStatus.authenticated) {
+      setState(() {
+        _isRefreshing = true;
+      });
+
+      await authProvider.refreshUserRole();
+
+      if (mounted) {
+        setState(() {
+          _isRefreshing = false;
+        });
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
 
-    // If still initializing, show a loading screen
-    if (authProvider.status == AuthStatus.initial) {
+    // If still initializing or refreshing role, show a loading screen
+    if (authProvider.status == AuthStatus.initial || _isRefreshing) {
       return const Scaffold(
         body: Center(
           child: CircularProgressIndicator(),
@@ -82,6 +109,9 @@ class _AuthWrapperState extends State<AuthWrapper> {
 
     // If authenticated, navigate to the appropriate dashboard based on role
     if (authProvider.status == AuthStatus.authenticated) {
+      // Debug output to check role
+      debugPrint('Current user role: ${authProvider.role}');
+
       switch (authProvider.role) {
         case AppConstants.roleStudent:
           return const StudentDashboard();
@@ -98,9 +128,10 @@ class _AuthWrapperState extends State<AuthWrapper> {
           Future.microtask(() {
             if (mounted && context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content:
-                      Text('Invalid role. Please contact the administrator.'),
+                SnackBar(
+                  content: Text(
+                    'Invalid role: "${authProvider.role}". Please contact the administrator.',
+                  ),
                   backgroundColor: AppTheme.errorColor,
                 ),
               );
@@ -108,9 +139,19 @@ class _AuthWrapperState extends State<AuthWrapper> {
             }
           });
 
-          return const Scaffold(
+          return Scaffold(
             body: Center(
-              child: Text('Invalid role. Logging out...'),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text('Invalid role: "${authProvider.role}". Logging out...'),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: _refreshUserRole,
+                    child: const Text('Refresh Role'),
+                  ),
+                ],
+              ),
             ),
           );
       }

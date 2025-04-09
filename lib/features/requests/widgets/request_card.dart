@@ -154,34 +154,40 @@ class RequestCard extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
+            Wrap(
+              spacing: 16,
+              runSpacing: 8,
               children: [
                 _buildDetailItem(
                   context,
                   AppLocalizations.of(context)!.translate('student_name'),
                   studentName,
+                  flex: 1,
                 ),
-                const SizedBox(width: 16),
                 _buildDetailItem(
                   context,
                   AppLocalizations.of(context)!.translate('days_count'),
                   daysCount,
+                  flex: 1,
                 ),
               ],
             ),
             const SizedBox(height: 8),
-            Row(
+            Wrap(
+              spacing: 16,
+              runSpacing: 8,
               children: [
                 _buildDetailItem(
                   context,
                   AppLocalizations.of(context)!.translate('start_date'),
                   startDate,
+                  flex: 1,
                 ),
-                const SizedBox(width: 16),
                 _buildDetailItem(
                   context,
                   AppLocalizations.of(context)!.translate('end_date'),
                   endDate,
+                  flex: 1,
                 ),
               ],
             ),
@@ -205,28 +211,28 @@ class RequestCard extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                _buildDetailItem(
-                  context,
-                  AppLocalizations.of(context)!.translate('student_name'),
-                  studentName,
-                ),
-              ],
+            _buildDetailItem(
+              context,
+              AppLocalizations.of(context)!.translate('student_name'),
+              studentName,
+              fullWidth: true,
             ),
             const SizedBox(height: 8),
-            Row(
+            Wrap(
+              spacing: 16,
+              runSpacing: 8,
               children: [
                 _buildDetailItem(
                   context,
                   AppLocalizations.of(context)!.translate('room_number'),
                   roomNumber,
+                  flex: 1,
                 ),
-                const SizedBox(width: 16),
                 _buildDetailItem(
                   context,
                   AppLocalizations.of(context)!.translate('college_name'),
                   collegeName,
+                  flex: 1,
                 ),
               ],
             ),
@@ -254,18 +260,21 @@ class RequestCard extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
+            Wrap(
+              spacing: 16,
+              runSpacing: 8,
               children: [
                 _buildDetailItem(
                   context,
                   AppLocalizations.of(context)!.translate('location'),
                   location,
+                  flex: 1,
                 ),
-                const SizedBox(width: 16),
                 _buildDetailItem(
                   context,
                   AppLocalizations.of(context)!.translate('priority'),
                   priority,
+                  flex: 1,
                 ),
               ],
             ),
@@ -289,11 +298,15 @@ class RequestCard extends StatelessWidget {
     String label,
     String value, {
     bool fullWidth = false,
+    int flex = 1,
   }) {
-    return Expanded(
-      flex: fullWidth ? 2 : 1,
+    return ConstrainedBox(
+      constraints: BoxConstraints(
+        maxWidth: fullWidth ? double.infinity : 200,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Text(
             label,
