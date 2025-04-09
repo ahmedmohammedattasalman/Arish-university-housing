@@ -495,50 +495,36 @@ class RequestDetailScreen extends StatelessWidget {
         final requestProvider =
             Provider.of<RequestProvider>(context, listen: false);
 
-        // Get supervisor name if available
-        String? supervisorName;
         try {
-          final supabaseService = SupabaseService();
-          final supervisorData = await supabaseService.client
-              .from('profiles')
-              .select('full_name')
-              .eq('id', supervisorId)
-              .single();
-          supervisorName = supervisorData['full_name'] as String?;
-        } catch (e) {
-          debugPrint('Error fetching supervisor name: $e');
-        }
-
-        // Create a direct notification service instance
-        final notificationService = NotificationService();
-
-        await requestProvider.updateRequestStatus(
-          requestId: request.id,
-          status: RequestStatus.approved,
-          supervisorId: supervisorId,
-          notes: notesController.text.isNotEmpty ? notesController.text : null,
-        );
-
-        // Create notification for the request owner
-        await notificationService.createRequestStatusNotification(
-          userId: request.userId,
-          requestId: request.id,
-          requestType: request.type.toString().split('.').last,
-          newStatus: RequestStatus.approved.toString().split('.').last,
-          supervisorName: supervisorName,
-          notes: notesController.text.isNotEmpty ? notesController.text : null,
-        );
-
-        // Show success message and pop back to list
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(AppLocalizations.of(context)!
-                  .translate('request_approved_success')),
-              backgroundColor: Colors.green,
-            ),
+          await requestProvider.updateRequestStatus(
+            requestId: request.id,
+            status: RequestStatus.approved,
+            supervisorId: supervisorId,
+            notes:
+                notesController.text.isNotEmpty ? notesController.text : null,
           );
-          Navigator.pop(context);
+
+          // Show success message and pop back to list
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(AppLocalizations.of(context)!
+                    .translate('request_approved_success')),
+                backgroundColor: Colors.green,
+              ),
+            );
+            Navigator.pop(context);
+          }
+        } catch (e) {
+          // Show error message
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Error: ${e.toString()}'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
         }
       }
     }
@@ -605,50 +591,35 @@ class RequestDetailScreen extends StatelessWidget {
         final requestProvider =
             Provider.of<RequestProvider>(context, listen: false);
 
-        // Get supervisor name if available
-        String? supervisorName;
         try {
-          final supabaseService = SupabaseService();
-          final supervisorData = await supabaseService.client
-              .from('profiles')
-              .select('full_name')
-              .eq('id', supervisorId)
-              .single();
-          supervisorName = supervisorData['full_name'] as String?;
-        } catch (e) {
-          debugPrint('Error fetching supervisor name: $e');
-        }
-
-        // Create a direct notification service instance
-        final notificationService = NotificationService();
-
-        await requestProvider.updateRequestStatus(
-          requestId: request.id,
-          status: RequestStatus.rejected,
-          supervisorId: supervisorId,
-          notes: reasonController.text,
-        );
-
-        // Create notification for the request owner
-        await notificationService.createRequestStatusNotification(
-          userId: request.userId,
-          requestId: request.id,
-          requestType: request.type.toString().split('.').last,
-          newStatus: RequestStatus.rejected.toString().split('.').last,
-          supervisorName: supervisorName,
-          notes: reasonController.text,
-        );
-
-        // Show success message and pop back to list
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(AppLocalizations.of(context)!
-                  .translate('request_rejected_success')),
-              backgroundColor: Colors.orange,
-            ),
+          await requestProvider.updateRequestStatus(
+            requestId: request.id,
+            status: RequestStatus.rejected,
+            supervisorId: supervisorId,
+            notes: reasonController.text,
           );
-          Navigator.pop(context);
+
+          // Show success message and pop back to list
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(AppLocalizations.of(context)!
+                    .translate('request_rejected_success')),
+                backgroundColor: Colors.orange,
+              ),
+            );
+            Navigator.pop(context);
+          }
+        } catch (e) {
+          // Show error message
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Error: ${e.toString()}'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
         }
       }
     }

@@ -135,28 +135,32 @@ class _StudentHomePageState extends State<StudentHomePage>
 
       if (userId != null) {
         final profile = await _supabaseService.getUserProfile(userId);
-        if (profile != null && profile['full_name'] != null) {
-          setState(() {
-            _username = profile['full_name'];
-            _isLoading = false;
-          });
-        } else {
-          setState(() {
-            _username = 'student'.tr(context);
-            _isLoading = false;
-          });
+        if (mounted) {
+          if (profile != null && profile['full_name'] != null) {
+            setState(() {
+              _username = profile['full_name'];
+              _isLoading = false;
+            });
+          } else {
+            setState(() {
+              _username = 'student'.tr(context);
+              _isLoading = false;
+            });
+          }
         }
-      } else {
+      } else if (mounted) {
         setState(() {
           _username = 'student'.tr(context);
           _isLoading = false;
         });
       }
     } catch (e) {
-      setState(() {
-        _username = 'student'.tr(context);
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _username = 'student'.tr(context);
+          _isLoading = false;
+        });
+      }
     }
   }
 

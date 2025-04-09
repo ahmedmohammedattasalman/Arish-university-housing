@@ -306,22 +306,36 @@ class _RequestApprovalScreenState extends State<RequestApprovalScreen> {
       if (supervisorId != null) {
         final requestProvider =
             Provider.of<RequestProvider>(context, listen: false);
-        await requestProvider.updateRequestStatus(
-          requestId: request.id,
-          status: RequestStatus.approved,
-          supervisorId: supervisorId,
-          notes: notesController.text.isNotEmpty ? notesController.text : null,
-        );
 
-        // Show success message
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(AppLocalizations.of(context)!
-                  .translate('request_approved_success')),
-              backgroundColor: Colors.green,
-            ),
+        try {
+          await requestProvider.updateRequestStatus(
+            requestId: request.id,
+            status: RequestStatus.approved,
+            supervisorId: supervisorId,
+            notes:
+                notesController.text.isNotEmpty ? notesController.text : null,
           );
+
+          // Show success message
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(AppLocalizations.of(context)!
+                    .translate('request_approved_success')),
+                backgroundColor: Colors.green,
+              ),
+            );
+          }
+        } catch (e) {
+          // Show error message
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Error: ${e.toString()}'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
         }
       }
     }
@@ -387,22 +401,35 @@ class _RequestApprovalScreenState extends State<RequestApprovalScreen> {
       if (supervisorId != null) {
         final requestProvider =
             Provider.of<RequestProvider>(context, listen: false);
-        await requestProvider.updateRequestStatus(
-          requestId: request.id,
-          status: RequestStatus.rejected,
-          supervisorId: supervisorId,
-          notes: reasonController.text,
-        );
 
-        // Show success message
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(AppLocalizations.of(context)!
-                  .translate('request_rejected_success')),
-              backgroundColor: Colors.orange,
-            ),
+        try {
+          await requestProvider.updateRequestStatus(
+            requestId: request.id,
+            status: RequestStatus.rejected,
+            supervisorId: supervisorId,
+            notes: reasonController.text,
           );
+
+          // Show success message
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(AppLocalizations.of(context)!
+                    .translate('request_rejected_success')),
+                backgroundColor: Colors.orange,
+              ),
+            );
+          }
+        } catch (e) {
+          // Show error message
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Error: ${e.toString()}'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
         }
       }
     }

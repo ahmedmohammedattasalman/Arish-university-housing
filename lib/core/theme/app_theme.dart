@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+// import 'package:google_fonts/google_fonts.dart';
+import 'font_helper.dart';
 
 class AppTheme {
   // Colors
@@ -22,58 +23,76 @@ class AppTheme {
   static const Color restaurantColor = Color(0xFFFF5722); // Deep orange
 
   // Text Styles
-  static TextStyle get headlineLarge => GoogleFonts.poppins(
-        fontSize: 28,
-        fontWeight: FontWeight.bold,
-        color: textPrimaryColor,
+  static TextStyle get headlineLarge => FontHelper.withFallback(
+        FontHelper.poppins(
+          fontSize: 28,
+          fontWeight: FontWeight.bold,
+          color: textPrimaryColor,
+        ),
       );
 
-  static TextStyle get headlineMedium => GoogleFonts.poppins(
-        fontSize: 24,
-        fontWeight: FontWeight.bold,
-        color: textPrimaryColor,
+  static TextStyle get headlineMedium => FontHelper.withFallback(
+        FontHelper.poppins(
+          fontSize: 24,
+          fontWeight: FontWeight.bold,
+          color: textPrimaryColor,
+        ),
       );
 
-  static TextStyle get headlineSmall => GoogleFonts.poppins(
-        fontSize: 20,
-        fontWeight: FontWeight.w600,
-        color: textPrimaryColor,
+  static TextStyle get headlineSmall => FontHelper.withFallback(
+        FontHelper.poppins(
+          fontSize: 20,
+          fontWeight: FontWeight.w600,
+          color: textPrimaryColor,
+        ),
       );
 
-  static TextStyle get titleLarge => GoogleFonts.poppins(
-        fontSize: 18,
-        fontWeight: FontWeight.w600,
-        color: textPrimaryColor,
+  static TextStyle get titleLarge => FontHelper.withFallback(
+        FontHelper.poppins(
+          fontSize: 18,
+          fontWeight: FontWeight.w600,
+          color: textPrimaryColor,
+        ),
       );
 
-  static TextStyle get titleMedium => GoogleFonts.poppins(
-        fontSize: 16,
-        fontWeight: FontWeight.w500,
-        color: textPrimaryColor,
+  static TextStyle get titleMedium => FontHelper.withFallback(
+        FontHelper.poppins(
+          fontSize: 16,
+          fontWeight: FontWeight.w500,
+          color: textPrimaryColor,
+        ),
       );
 
-  static TextStyle get bodyLarge => GoogleFonts.poppins(
-        fontSize: 16,
-        fontWeight: FontWeight.normal,
-        color: textPrimaryColor,
+  static TextStyle get bodyLarge => FontHelper.withFallback(
+        FontHelper.poppins(
+          fontSize: 16,
+          fontWeight: FontWeight.normal,
+          color: textPrimaryColor,
+        ),
       );
 
-  static TextStyle get bodyMedium => GoogleFonts.poppins(
-        fontSize: 14,
-        fontWeight: FontWeight.normal,
-        color: textPrimaryColor,
+  static TextStyle get bodyMedium => FontHelper.withFallback(
+        FontHelper.poppins(
+          fontSize: 14,
+          fontWeight: FontWeight.normal,
+          color: textPrimaryColor,
+        ),
       );
 
-  static TextStyle get bodySmall => GoogleFonts.poppins(
-        fontSize: 12,
-        fontWeight: FontWeight.normal,
-        color: textSecondaryColor,
+  static TextStyle get bodySmall => FontHelper.withFallback(
+        FontHelper.poppins(
+          fontSize: 12,
+          fontWeight: FontWeight.normal,
+          color: textSecondaryColor,
+        ),
       );
 
-  static TextStyle get buttonText => GoogleFonts.poppins(
-        fontSize: 16,
-        fontWeight: FontWeight.w600,
-        color: Colors.white,
+  static TextStyle get buttonText => FontHelper.withFallback(
+        FontHelper.poppins(
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+          color: Colors.white,
+        ),
       );
 
   // ThemeData

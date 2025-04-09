@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -10,6 +11,32 @@ import 'core/localization/app_localizations.dart';
 import 'core/localization/language_provider.dart';
 import 'features/requests/providers/request_provider.dart';
 import 'features/notifications/providers/notification_provider.dart';
+
+// Preload web fonts to avoid CORS issues
+Future<void> preloadWebFonts(BuildContext context) async {
+  if (kIsWeb) {
+    // Force load fonts
+    try {
+      // Create a temporary text painter that will use all required fonts
+      final textStyle = TextStyle(fontFamily: 'Poppins');
+      final painter = TextPainter(
+        text: TextSpan(
+          text: 'Font preloader',
+          style: textStyle,
+        ),
+        textDirection: TextDirection.ltr,
+      );
+      painter.layout();
+
+      // Use a delayed future to give the browser time to load fonts
+      await Future.delayed(const Duration(milliseconds: 200));
+      debugPrint('Fonts preloaded for web');
+    } catch (e) {
+      // Just log errors, don't crash
+      debugPrint('Font preloading error (non-fatal): $e');
+    }
+  }
+}
 
 void main() {
   // This must be called before any other Flutter code
@@ -52,6 +79,17 @@ Future<void> initializeApp() async {
 
     // Run app with error state
     runApp(ErrorApp(error: errorMsg));
+  }
+}
+
+// Utility function to handle web font loading errors
+void logFontLoadingError(Object error) {
+  if (kIsWeb && error.toString().contains('Failed to load font')) {
+    // In web mode, just log the error but don't crash
+    debugPrint('Font loading error (non-fatal): $error');
+  } else {
+    // In other platforms, rethrow
+    throw error;
   }
 }
 
@@ -139,6 +177,19 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
     _initLanguage();
+
+    // Add error handlers for web mode
+    if (kIsWeb) {
+      FlutterError.onError = (FlutterErrorDetails details) {
+        // Only handle font loading errors in a special way
+        if (details.exception.toString().contains('Failed to load font')) {
+          logFontLoadingError(details.exception);
+        } else {
+          // For other errors, use the default handler
+          FlutterError.presentError(details);
+        }
+      };
+    }
   }
 
   Future<void> _initLanguage() async {
@@ -147,6 +198,11 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
+    // Preload web fonts
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      preloadWebFonts(context);
+    });
+
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
