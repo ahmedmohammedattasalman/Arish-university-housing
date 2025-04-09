@@ -34,6 +34,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _departmentController = TextEditingController();
   final _roomNumberController = TextEditingController();
   final _programController = TextEditingController();
+  final _yearInCollegeController = TextEditingController();
 
   String _selectedRole = AppConstants.roleStudent;
   bool _isPasswordVisible = false;
@@ -81,6 +82,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _departmentController.dispose();
     _roomNumberController.dispose();
     _programController.dispose();
+    _yearInCollegeController.dispose();
     super.dispose();
   }
 
@@ -133,9 +135,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
         userData['student_id'] = _idController.text.trim();
         userData['room_number'] = _roomNumberController.text.trim();
         userData['program'] = _programController.text.trim();
+        userData['YEAR'] = _yearInCollegeController.text.trim();
       } else if (_selectedRole == AppConstants.roleSupervisor) {
         userData['employee_id'] = _idController.text.trim();
-        userData['department'] = _departmentController.text.trim();
       } else if (_selectedRole == AppConstants.roleAdmin) {
         userData['employee_id'] = _idController.text.trim();
         userData['department'] = _departmentController.text.trim();
@@ -506,13 +508,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               const Divider(),
                               const SizedBox(height: 16),
 
-                              Text(
-                                'role_info'.tr(context),
-                                style: AppTheme.titleMedium.copyWith(
-                                  fontWeight: FontWeight.bold,
+                              // Only show role info heading if the role has additional fields
+                              if (_selectedRole !=
+                                  AppConstants.roleSupervisor) ...[
+                                Text(
+                                  'role_info'.tr(context),
+                                  style: AppTheme.titleMedium.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 24),
+                                const SizedBox(height: 24),
+                              ],
 
                               // Role-specific fields
                               if (_selectedRole ==
@@ -531,10 +537,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 ),
                                 const SizedBox(height: 16),
 
-                                // Program/Major
+                                // College (Previously Program/Major)
                                 _buildTextField(
-                                  label: 'program'.tr(context),
-                                  hint: 'program_prompt'.tr(context),
+                                  label: 'college'.tr(context),
+                                  hint: 'college'.tr(context),
                                   controller: _programController,
                                   textInputAction: TextInputAction.next,
                                   prefixIcon: Icons.school_outlined,
@@ -543,9 +549,26 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                       : null,
                                   enabled: !isLoading,
                                 ),
+                                const SizedBox(height: 16),
+
+                                // YEAR
+                                _buildTextField(
+                                  label: 'YEAR'.tr(context),
+                                  hint: 'YEAR'.tr(context),
+                                  controller: _yearInCollegeController,
+                                  textInputAction: TextInputAction.next,
+                                  keyboardType: TextInputType.number,
+                                  prefixIcon: Icons.format_list_numbered,
+                                  validator: (value) => value?.isEmpty ?? true
+                                      ? 'id_required'.tr(context)
+                                      : null,
+                                  enabled: !isLoading,
+                                ),
                               ] else if (_selectedRole ==
-                                      AppConstants.roleSupervisor ||
-                                  _selectedRole == AppConstants.roleAdmin ||
+                                  AppConstants.roleSupervisor) ...[
+                                // No fields needed for supervisor
+                              ] else if (_selectedRole ==
+                                      AppConstants.roleAdmin ||
                                   _selectedRole == AppConstants.roleLabor) ...[
                                 // Department
                                 _buildTextField(

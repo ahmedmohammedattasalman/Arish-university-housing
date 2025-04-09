@@ -61,9 +61,9 @@ class Validators {
       return 'Phone number is required';
     }
 
-    final phoneRegex = RegExp(r'^\d{10}$');
+    final phoneRegex = RegExp(r'^\d{11}$');
     if (!phoneRegex.hasMatch(value)) {
-      return 'Enter a valid 10-digit phone number';
+      return 'Enter a valid 11-digit phone number';
     }
 
     return null;
