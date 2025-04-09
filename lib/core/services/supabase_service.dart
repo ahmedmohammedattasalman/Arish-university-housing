@@ -70,8 +70,16 @@ class SupabaseService {
         final isArabic =
             Provider.of<LanguageProvider>(context, listen: false).isArabic;
         if (isArabic) {
-          // No need to manually encode as Supabase handles UTF-8 properly
-          // This is just a hook in case we need to do any special processing in the future
+          // Process Arabic text if needed
+          data = _processArabicData(data);
+        }
+      }
+
+      // If the table is 'profiles', ensure we have the correct user ID
+      if (tableName == 'profiles') {
+        final user = await getCurrentUser();
+        if (user != null && !data.containsKey('id')) {
+          data['id'] = user.id;
         }
       }
 
@@ -79,6 +87,16 @@ class SupabaseService {
       return response;
     } catch (e) {
       debugPrint('Error inserting data: $e');
+      // Handle RLS policy errors more gracefully
+      if (e.toString().contains('violates row-level security policy')) {
+        throw Exception(
+            'Permission denied. You may not have the right access to perform this operation.');
+      }
+      // Handle potential character encoding issues
+      if (e.toString().contains('invalid byte sequence')) {
+        throw Exception(
+            'Character encoding error. Please check the text you entered.');
+      }
       rethrow;
     }
   }
@@ -93,8 +111,17 @@ class SupabaseService {
         final isArabic =
             Provider.of<LanguageProvider>(context, listen: false).isArabic;
         if (isArabic) {
-          // No need to manually encode as Supabase handles UTF-8 properly
-          // This is just a hook in case we need to do any special processing in the future
+          // Process Arabic text if needed
+          data = _processArabicData(data);
+        }
+      }
+
+      // Explicitly validate permission for profiles updates
+      if (tableName == 'profiles') {
+        final user = await getCurrentUser();
+        if (user == null || (user.id != id && !_isUserAdmin(user))) {
+          throw Exception(
+              'Permission denied. You can only update your own profile.');
         }
       }
 
@@ -103,29 +130,85 @@ class SupabaseService {
       return response;
     } catch (e) {
       debugPrint('Error updating data: $e');
+      // Handle RLS policy errors more gracefully
+      if (e.toString().contains('violates row-level security policy')) {
+        throw Exception(
+            'Permission denied. You may not have the right access to perform this operation.');
+      }
+      // Handle potential character encoding issues
+      if (e.toString().contains('invalid byte sequence')) {
+        throw Exception(
+            'Character encoding error. Please check the text you entered.');
+      }
       rethrow;
     }
+  }
+
+  // Check if the user is an admin
+  bool _isUserAdmin(User user) {
+    final userRole = user.userMetadata?['role'] as String?;
+    return userRole == 'admin';
+  }
+
+  // Helper method to ensure proper handling of Arabic text
+  Map<String, dynamic> _processArabicData(Map<String, dynamic> data) {
+    // Make a copy of the data to avoid modifying the original
+    final processedData = Map<String, dynamic>.from(data);
+
+    // Process text fields that might contain Arabic
+    processedData.forEach((key, value) {
+      if (value is String && _containsArabic(value)) {
+        // Log for debugging but don't modify the text - Supabase handles UTF-8
+        debugPrint('Arabic text detected in field: $key');
+      }
+    });
+
+    return processedData;
+  }
+
+  // Helper method for debugging only - to check if we're handling all Arabic text cases
+  bool _containsArabic(String text) {
+    // Check for Arabic Unicode range
+    final hasArabic = text.contains(RegExp(r'[\u0600-\u06FF]'));
+    if (hasArabic) {
+      debugPrint('Arabic text detected: $text');
+    }
+    return hasArabic;
   }
 
   // Handle non-ASCII characters properly in query filters
   Future<dynamic> queryWithFilter(String tableName, String column, String value,
       {BuildContext? context}) async {
     try {
-      // Ensure filter value is properly encoded for Arabic if needed
-      if (context != null) {
-        final isArabic =
-            Provider.of<LanguageProvider>(context, listen: false).isArabic;
-        if (isArabic && value.contains(RegExp(r'[\u0600-\u06FF]'))) {
-          // Arabic text detected, ensure proper handling
-          // Supabase handles UTF-8 correctly, but this is a hook point for future needs
-        }
+      // Check if the value contains Arabic characters
+      bool containsArabic = _containsArabic(value);
+
+      if (containsArabic) {
+        debugPrint('Arabic filter detected for column: $column');
       }
 
+      // Supabase handles UTF-8 correctly, so we can use the value directly
       final response =
           await _client.from(tableName).select().ilike(column, '%$value%');
       return response;
     } catch (e) {
       debugPrint('Error querying with filter: $e');
+      rethrow;
+    }
+  }
+
+  // Enhanced query method specifically for Arabic text searches
+  Future<dynamic> arabicTextSearch(
+      String tableName, String column, String value) async {
+    try {
+      final response = await _client
+          .from(tableName)
+          .select()
+          .filter(column, 'ilike', '%$value%');
+
+      return response;
+    } catch (e) {
+      debugPrint('Error in Arabic text search: $e');
       rethrow;
     }
   }

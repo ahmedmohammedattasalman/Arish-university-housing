@@ -5,6 +5,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/validators.dart';
 import '../providers/auth_provider.dart';
 import '../../../core/widgets/language_toggle_button.dart';
+import '../../../core/localization/string_extensions.dart';
 
 class LoginScreen extends StatefulWidget {
   final VoidCallback onSignUpPressed;
@@ -238,7 +239,7 @@ class _LoginScreenState extends State<LoginScreen>
                       duration: const Duration(milliseconds: 800),
                       delay: const Duration(milliseconds: 300),
                       child: Text(
-                        'University Housing',
+                        'app_name'.tr(context),
                         style: AppTheme.headlineMedium.copyWith(
                           fontWeight: FontWeight.bold,
                           letterSpacing: 0.5,
@@ -251,7 +252,7 @@ class _LoginScreenState extends State<LoginScreen>
                       duration: const Duration(milliseconds: 800),
                       delay: const Duration(milliseconds: 400),
                       child: Text(
-                        'Welcome back',
+                        'welcome'.tr(context),
                         style: AppTheme.titleMedium.copyWith(
                           color: AppTheme.textSecondaryColor,
                           fontWeight: FontWeight.w500,
@@ -291,7 +292,7 @@ class _LoginScreenState extends State<LoginScreen>
                                 FadeInUp(
                                   duration: const Duration(milliseconds: 800),
                                   delay: const Duration(milliseconds: 600),
-                                  child: _buildEmailField(isLoading),
+                                  child: _buildEmailField(isLoading, context),
                                 ),
                                 const SizedBox(height: 20),
 
@@ -299,7 +300,8 @@ class _LoginScreenState extends State<LoginScreen>
                                 FadeInUp(
                                   duration: const Duration(milliseconds: 800),
                                   delay: const Duration(milliseconds: 700),
-                                  child: _buildPasswordField(isLoading),
+                                  child:
+                                      _buildPasswordField(isLoading, context),
                                 ),
                                 const SizedBox(height: 8),
 
@@ -307,7 +309,8 @@ class _LoginScreenState extends State<LoginScreen>
                                 if (_needsEmailVerification)
                                   FadeInUp(
                                     duration: const Duration(milliseconds: 400),
-                                    child: _buildVerificationBox(isLoading),
+                                    child: _buildVerificationBox(
+                                        isLoading, context),
                                   ),
 
                                 // Forgot Password
@@ -330,7 +333,7 @@ class _LoginScreenState extends State<LoginScreen>
                                               horizontal: 8, vertical: 4),
                                         ),
                                         child: Text(
-                                          'Forgot Password?',
+                                          'forget_password'.tr(context),
                                           style: AppTheme.bodyMedium.copyWith(
                                             color: AppTheme.primaryColor,
                                             fontWeight: FontWeight.w600,
@@ -346,7 +349,7 @@ class _LoginScreenState extends State<LoginScreen>
                                 FadeInUp(
                                   duration: const Duration(milliseconds: 800),
                                   delay: const Duration(milliseconds: 900),
-                                  child: _buildLoginButton(isLoading),
+                                  child: _buildLoginButton(isLoading, context),
                                 ),
 
                                 // Divider
@@ -368,7 +371,7 @@ class _LoginScreenState extends State<LoginScreen>
                                           padding: const EdgeInsets.symmetric(
                                               horizontal: 16.0),
                                           child: Text(
-                                            'OR',
+                                            'or'.tr(context),
                                             style: TextStyle(
                                               color:
                                                   AppTheme.textSecondaryColor,
@@ -396,7 +399,7 @@ class _LoginScreenState extends State<LoginScreen>
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
                                       Text(
-                                        "Don't have an account?",
+                                        'no_account'.tr(context),
                                         style: AppTheme.bodyMedium,
                                       ),
                                       TextButton(
@@ -404,7 +407,7 @@ class _LoginScreenState extends State<LoginScreen>
                                             ? null
                                             : widget.onSignUpPressed,
                                         child: Text(
-                                          'Sign Up',
+                                          'register'.tr(context),
                                           style: AppTheme.bodyMedium.copyWith(
                                             color: AppTheme.primaryColor,
                                             fontWeight: FontWeight.bold,
@@ -422,7 +425,7 @@ class _LoginScreenState extends State<LoginScreen>
                                   duration: const Duration(milliseconds: 800),
                                   delay: const Duration(milliseconds: 1200),
                                   child: Text(
-                                    'By signing in, you agree to our Terms of Service and Privacy Policy',
+                                    'terms_policy'.tr(context),
                                     style: AppTheme.bodySmall.copyWith(
                                       color: AppTheme.textSecondaryColor,
                                     ),
@@ -445,12 +448,12 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
-  Widget _buildEmailField(bool isLoading) {
+  Widget _buildEmailField(bool isLoading, BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Email',
+          'email'.tr(context),
           style: AppTheme.titleMedium.copyWith(
             fontWeight: FontWeight.w500,
           ),
@@ -464,7 +467,7 @@ class _LoginScreenState extends State<LoginScreen>
           enabled: !isLoading,
           style: AppTheme.bodyMedium,
           decoration: InputDecoration(
-            hintText: 'Enter your email',
+            hintText: 'email'.tr(context),
             prefixIcon: const Icon(Icons.email_outlined),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -488,12 +491,12 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
-  Widget _buildPasswordField(bool isLoading) {
+  Widget _buildPasswordField(bool isLoading, BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Password',
+          'password'.tr(context),
           style: AppTheme.titleMedium.copyWith(
             fontWeight: FontWeight.w500,
           ),
@@ -507,7 +510,7 @@ class _LoginScreenState extends State<LoginScreen>
           enabled: !isLoading,
           style: AppTheme.bodyMedium,
           decoration: InputDecoration(
-            hintText: 'Enter your password',
+            hintText: 'password'.tr(context),
             prefixIcon: const Icon(Icons.lock_outline),
             suffixIcon: IconButton(
               icon: Icon(
@@ -540,7 +543,7 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
-  Widget _buildVerificationBox(bool isLoading) {
+  Widget _buildVerificationBox(bool isLoading, BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16, top: 8),
       padding: const EdgeInsets.all(16),
@@ -561,7 +564,7 @@ class _LoginScreenState extends State<LoginScreen>
               ),
               const SizedBox(width: 8),
               Text(
-                'Email not verified',
+                'email_not_verified'.tr(context),
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   color: Colors.amber[800],
@@ -570,9 +573,9 @@ class _LoginScreenState extends State<LoginScreen>
             ],
           ),
           const SizedBox(height: 8),
-          const Text(
-            'Please check your inbox for a verification email',
-            style: TextStyle(fontSize: 14),
+          Text(
+            'check_inbox'.tr(context),
+            style: const TextStyle(fontSize: 14),
           ),
           const SizedBox(height: 12),
           SizedBox(
@@ -588,9 +591,9 @@ class _LoginScreenState extends State<LoginScreen>
                 ),
               ),
               icon: const Icon(Icons.refresh, size: 18),
-              label: const Text(
-                'Resend Verification Email',
-                style: TextStyle(fontWeight: FontWeight.bold),
+              label: Text(
+                'resend_verification'.tr(context),
+                style: const TextStyle(fontWeight: FontWeight.bold),
               ),
             ),
           ),
@@ -599,7 +602,7 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
-  Widget _buildLoginButton(bool isLoading) {
+  Widget _buildLoginButton(bool isLoading, BuildContext context) {
     return SizedBox(
       width: double.infinity,
       height: 54,
@@ -631,7 +634,7 @@ class _LoginScreenState extends State<LoginScreen>
               const Icon(Icons.login_rounded, size: 22, color: Colors.white),
             const SizedBox(width: 8),
             Text(
-              isLoading ? 'Signing In...' : 'Sign In',
+              isLoading ? 'loading'.tr(context) : 'login'.tr(context),
               style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,

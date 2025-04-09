@@ -4,6 +4,7 @@ import '../../../core/services/supabase_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/loading_indicator.dart';
 import '../providers/auth_provider.dart';
+import '../../../core/localization/string_extensions.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({Key? key}) : super(key: key);
@@ -44,20 +45,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
           });
         } else {
           setState(() {
-            _error = 'Could not retrieve user profile data';
+            _error = 'could_not_retrieve_profile'.tr(context);
             _isLoading = false;
           });
         }
       } else {
         setState(() {
-          _error = 'User not authenticated';
+          _error = 'user_not_authenticated'.tr(context);
           _isLoading = false;
         });
       }
     } catch (e) {
       debugPrint('Profile error: $e');
       setState(() {
-        _error = 'Error loading profile: ${e.toString()}';
+        _error = 'error_loading_profile'.tr(context) + ': ${e.toString()}';
         _isLoading = false;
       });
     }
@@ -79,7 +80,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           const SizedBox(height: 4),
           Text(
-            value ?? 'Not provided',
+            value ?? 'not_provided'.tr(context),
             style: const TextStyle(
               fontSize: 16,
             ),
@@ -94,18 +95,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
-    final role = _userProfile?['user_role'] ?? authProvider.role ?? 'Unknown';
+    final role = _userProfile?['user_role'] ??
+        authProvider.role ??
+        'unknown'.tr(context);
     final theme = AppTheme.getThemeForRole(role);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Profile'),
+        title: Text('profile'.tr(context)),
         backgroundColor: theme.primaryColor,
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _loadUserProfile,
-            tooltip: 'Refresh Profile',
+            tooltip: 'refresh_profile'.tr(context),
           ),
         ],
       ),
@@ -117,13 +120,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        'Error: $_error',
+                        'error'.tr(context) + ': $_error',
                         style: const TextStyle(color: Colors.red),
                       ),
                       const SizedBox(height: 16),
                       ElevatedButton(
                         onPressed: _loadUserProfile,
-                        child: const Text('Retry'),
+                        child: Text('retry'.tr(context)),
                       ),
                     ],
                   ),
@@ -167,7 +170,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                             .toString()
                                             .isNotEmpty
                                     ? _userProfile!['full_name']
-                                    : _userProfile?['email'] ?? 'Unknown User',
+                                    : _userProfile?['email'] ??
+                                        'unknown_user'.tr(context),
                                 style: const TextStyle(
                                   fontSize: 20,
                                   fontWeight: FontWeight.bold,
@@ -176,7 +180,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               const SizedBox(height: 4),
                               // Email
                               Text(
-                                _userProfile?['email'] ?? 'No email provided',
+                                _userProfile?['email'] ??
+                                    'no_email_provided'.tr(context),
                                 style: TextStyle(
                                   fontSize: 16,
                                   color: Colors.grey[600],
@@ -194,10 +199,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   borderRadius: BorderRadius.circular(20),
                                 ),
                                 child: Text(
-                                  (_userProfile?['user_role'] ??
+                                  _getUserRoleTranslated(
+                                      context,
+                                      _userProfile?['user_role'] ??
                                           _userProfile?['role'] ??
-                                          'Unknown')
-                                      .toUpperCase(),
+                                          'unknown'),
                                   style: const TextStyle(
                                     color: Colors.white,
                                     fontWeight: FontWeight.bold,
@@ -210,15 +216,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         const SizedBox(height: 32),
 
                         // Personal Information Section
-                        _buildSectionHeader('Personal Information'),
-                        _buildProfileField('ID', _userProfile?['id']),
+                        _buildSectionHeader('personal_info'.tr(context)),
                         _buildProfileField(
-                            'Full Name', _userProfile?['full_name']),
-                        _buildProfileField('Email', _userProfile?['email']),
-                        _buildProfileField('Phone', _userProfile?['phone']),
-                        _buildProfileField('Created At',
+                            'id'.tr(context), _userProfile?['id']),
+                        _buildProfileField(
+                            'name'.tr(context), _userProfile?['full_name']),
+                        _buildProfileField(
+                            'email'.tr(context), _userProfile?['email']),
+                        _buildProfileField(
+                            'phone'.tr(context), _userProfile?['phone']),
+                        _buildProfileField('created_at'.tr(context),
                             _formatDate(_userProfile?['created_at'])),
-                        _buildProfileField('Last Updated',
+                        _buildProfileField('last_updated'.tr(context),
                             _formatDate(_userProfile?['updated_at'])),
 
                         // Role-specific information based on user role
@@ -237,15 +246,59 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               minimumSize: const Size(200, 45),
                             ),
                             onPressed: () {
-                              // Navigate to edit profile screen (to be implemented)
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                      'Edit Profile functionality coming soon'),
-                                ),
+                              // Edit profile action
+                            },
+                            child: Text('edit_profile'.tr(context)),
+                          ),
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        // Logout Button
+                        Center(
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.red,
+                              foregroundColor: Colors.white,
+                              minimumSize: const Size(200, 45),
+                            ),
+                            onPressed: () {
+                              // Show confirmation dialog
+                              showDialog(
+                                context: context,
+                                builder: (BuildContext dialogContext) {
+                                  return AlertDialog(
+                                    title:
+                                        Text('logout_confirmation'.tr(context)),
+                                    content: Text('logout_confirmation_message'
+                                        .tr(context)),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () {
+                                          Navigator.pop(dialogContext);
+                                        },
+                                        child: Text('cancel'.tr(context)),
+                                      ),
+                                      TextButton(
+                                        onPressed: () {
+                                          Navigator.pop(dialogContext);
+                                          // Logout user
+                                          Provider.of<AuthProvider>(context,
+                                                  listen: false)
+                                              .signOut();
+                                        },
+                                        child: Text(
+                                          'logout'.tr(context),
+                                          style: const TextStyle(
+                                              color: Colors.red),
+                                        ),
+                                      ),
+                                    ],
+                                  );
+                                },
                               );
                             },
-                            child: const Text('Edit Profile'),
+                            child: Text('logout'.tr(context)),
                           ),
                         ),
                       ],
@@ -283,20 +336,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  // Helper to get translated role name
+  String _getUserRoleTranslated(BuildContext context, String role) {
+    return 'role_title_$role'.tr(context).toUpperCase();
+  }
+
   // Role-specific sections
   Widget _buildStudentSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 24),
-        _buildSectionHeader('Student Information'),
-        _buildProfileField('Student ID', _userProfile?['student_id']),
-        _buildProfileField('Room Number', _userProfile?['room_number']),
-        _buildProfileField('Program', _userProfile?['program']),
+        _buildSectionHeader('student_info'.tr(context)),
         _buildProfileField(
-            'Enrollment Date', _formatDate(_userProfile?['enrollment_date'])),
+            'student_id'.tr(context), _userProfile?['student_id']),
         _buildProfileField(
-            'Graduation Year', _userProfile?['graduation_year']?.toString()),
+            'room_number'.tr(context), _userProfile?['room_number']),
+        _buildProfileField('program'.tr(context), _userProfile?['program']),
+        _buildProfileField('enrollment_date'.tr(context),
+            _formatDate(_userProfile?['enrollment_date'])),
+        _buildProfileField('graduation_year'.tr(context),
+            _userProfile?['graduation_year']?.toString()),
       ],
     );
   }
@@ -306,13 +366,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 24),
-        _buildSectionHeader('Supervisor Information'),
-        _buildProfileField('Employee ID', _userProfile?['employee_id']),
-        _buildProfileField('Department', _userProfile?['department']),
+        _buildSectionHeader('supervisor_info'.tr(context)),
         _buildProfileField(
-            'Building Assigned', _userProfile?['building_assigned']),
+            'employee_id'.tr(context), _userProfile?['employee_id']),
         _buildProfileField(
-            'Hire Date', _formatDate(_userProfile?['hire_date'])),
+            'department'.tr(context), _userProfile?['department']),
+        _buildProfileField('building_assigned'.tr(context),
+            _userProfile?['building_assigned']),
+        _buildProfileField(
+            'hire_date'.tr(context), _formatDate(_userProfile?['hire_date'])),
       ],
     );
   }
@@ -322,12 +384,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 24),
-        _buildSectionHeader('Admin Information'),
-        _buildProfileField('Employee ID', _userProfile?['employee_id']),
-        _buildProfileField('Department', _userProfile?['department']),
-        _buildProfileField('Access Level', _userProfile?['access_level']),
+        _buildSectionHeader('admin_info'.tr(context)),
         _buildProfileField(
-            'Hire Date', _formatDate(_userProfile?['hire_date'])),
+            'employee_id'.tr(context), _userProfile?['employee_id']),
+        _buildProfileField(
+            'department'.tr(context), _userProfile?['department']),
+        _buildProfileField(
+            'access_level'.tr(context), _userProfile?['access_level']),
+        _buildProfileField(
+            'hire_date'.tr(context), _formatDate(_userProfile?['hire_date'])),
       ],
     );
   }
@@ -337,12 +402,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 24),
-        _buildSectionHeader('Labor Staff Information'),
-        _buildProfileField('Employee ID', _userProfile?['employee_id']),
-        _buildProfileField('Department', _userProfile?['department']),
-        _buildProfileField('Specialty', _userProfile?['specialty']),
+        _buildSectionHeader('labor_staff_info'.tr(context)),
         _buildProfileField(
-            'Building Assigned', _userProfile?['building_assigned']),
+            'employee_id'.tr(context), _userProfile?['employee_id']),
+        _buildProfileField(
+            'department'.tr(context), _userProfile?['department']),
+        _buildProfileField('specialty'.tr(context), _userProfile?['specialty']),
+        _buildProfileField('building_assigned'.tr(context),
+            _userProfile?['building_assigned']),
       ],
     );
   }
@@ -352,11 +419,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 24),
-        _buildSectionHeader('Restaurant Staff Information'),
-        _buildProfileField('Employee ID', _userProfile?['employee_id']),
-        _buildProfileField('Position', _userProfile?['position']),
-        _buildProfileField('Dining Hall', _userProfile?['dining_hall']),
-        _buildProfileField('Shift Hours', _userProfile?['shift_hours']),
+        _buildSectionHeader('restaurant_staff_info'.tr(context)),
+        _buildProfileField(
+            'employee_id'.tr(context), _userProfile?['employee_id']),
+        _buildProfileField('position'.tr(context), _userProfile?['position']),
+        _buildProfileField(
+            'dining_hall'.tr(context), _userProfile?['dining_hall']),
+        _buildProfileField(
+            'shift_hours'.tr(context), _userProfile?['shift_hours']),
       ],
     );
   }

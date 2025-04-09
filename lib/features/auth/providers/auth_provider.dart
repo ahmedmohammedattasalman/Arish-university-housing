@@ -231,6 +231,10 @@ class AuthProvider extends ChangeNotifier {
 
       // Remove non-essential fields from profile data
       final profileData = Map<String, dynamic>.from(userData);
+      // Add user_role to profile data (required by RLS policies)
+      profileData['user_role'] = role;
+      // Add email to profile data (required by RLS policies)
+      profileData['email'] = email;
 
       // Step 1: Sign up with Supabase Auth with user metadata
       final response = await _supabaseService.signUp(
@@ -253,47 +257,74 @@ class AuthProvider extends ChangeNotifier {
           role: role,
         );
 
-        // Add essential fields to profile data
-        profileData['id'] = _user!.id;
-        profileData['email'] = email;
-        profileData['user_role'] = role;
-        profileData['created_at'] = DateTime.now().toIso8601String();
-
-        // Try to create profile in the database
         try {
-          await _supabaseService.client
-              .from(AppConstants.profilesCollection)
-              .insert(profileData);
+          // Step 2: Create user profile
+          // Ensure profileData has the user ID
+          profileData['id'] = _user!.id;
+
+          try {
+            // Try to create profile - handle potential errors with Arabic text
+            await _supabaseService.insertData('profiles', profileData);
+
+            // Save profile data locally
+            await LocalStorageService.saveUserProfile({
+              ...profileData,
+              'id': _user!.id,
+              'email': email,
+              'role': role,
+            });
+          } catch (e) {
+            debugPrint('Error creating profile: $e');
+
+            // Check if the profile might already exist
+            if (e.toString().contains('violates row-level security policy')) {
+              // Try to update profile instead
+              try {
+                await _supabaseService.updateData(
+                    'profiles', _user!.id, profileData);
+              } catch (updateError) {
+                debugPrint(
+                    'Error updating profile after creation failed: $updateError');
+                // Profile might exist but we can't update it, continue with auth-only credentials
+              }
+            }
+          }
+
+          _status = AuthStatus.authenticated;
+          _safeNotifyListeners();
+          return true;
         } catch (e) {
-          debugPrint('Error creating profile: $e');
-          // We'll continue even if this fails, since the profile will be created
-          // on first login via getUserProfile
+          debugPrint('Error in profile creation: $e');
+          // Still consider signup successful if the auth part worked
+          _status = AuthStatus.authenticated;
+          _safeNotifyListeners();
+          return true;
         }
-
-        // Save user profile locally
-        await LocalStorageService.saveUserProfile(profileData);
-
-        _status = AuthStatus.authenticated;
-        _safeNotifyListeners();
-        return true;
       } else {
-        // This shouldn't happen with a successful auth response
         _status = AuthStatus.unauthenticated;
-        _errorMessage = 'Registration failed: No user returned from Supabase';
+        _errorMessage =
+            'Registration failed. Please check your information and try again.';
         _safeNotifyListeners();
         return false;
       }
     } catch (e) {
       _status = AuthStatus.error;
 
-      // Extract more meaningful error message
+      // Parse error message
       String errorMsg = e.toString();
+
       if (errorMsg.contains('already registered')) {
-        errorMsg =
-            'Email is already registered. Please use a different email or try to sign in.';
+        _errorMessage =
+            'This email is already registered. Please sign in or use a different email.';
+      } else if (errorMsg.contains('invalid email')) {
+        _errorMessage = 'Please enter a valid email address.';
+      } else if (errorMsg.contains('violates row-level security policy')) {
+        _errorMessage =
+            'Permission error during profile creation. Please try again or contact support.';
+      } else {
+        _errorMessage = errorMsg;
       }
 
-      _errorMessage = errorMsg;
       _safeNotifyListeners();
       return false;
     }

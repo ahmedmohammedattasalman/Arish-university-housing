@@ -4,6 +4,8 @@ import '../../../core/theme/app_theme.dart';
 import '../../../features/auth/providers/auth_provider.dart';
 import '../../../features/auth/screens/profile_screen.dart';
 import '../../../core/widgets/language_toggle_button.dart';
+import '../../../core/localization/string_extensions.dart';
+import '../../../core/services/supabase_service.dart';
 
 class RestaurantDashboard extends StatefulWidget {
   const RestaurantDashboard({Key? key}) : super(key: key);
@@ -34,12 +36,12 @@ class _RestaurantDashboardState extends State<RestaurantDashboard> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Restaurant Dashboard'),
+        title: Text('restaurant'.tr(context)),
         backgroundColor: AppTheme.restaurantColor,
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
-            tooltip: 'Logout',
+            tooltip: 'logout'.tr(context),
             onPressed: () {
               authProvider.signOut();
             },
@@ -54,32 +56,78 @@ class _RestaurantDashboardState extends State<RestaurantDashboard> {
         backgroundColor: Colors.white,
         selectedItemColor: AppTheme.restaurantColor,
         unselectedItemColor: AppTheme.textSecondaryColor,
-        items: const [
+        items: [
           BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
+            icon: const Icon(Icons.home),
+            label: 'dashboard'.tr(context),
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.qr_code_scanner),
-            label: 'Verify Meal',
+            icon: const Icon(Icons.qr_code_scanner),
+            label: 'meal_verification'.tr(context),
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.assessment),
-            label: 'Reports',
+            icon: const Icon(Icons.assessment),
+            label: 'reports'.tr(context),
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Profile',
+            icon: const Icon(Icons.person),
+            label: 'profile'.tr(context),
           ),
         ],
       ),
-      floatingActionButton: const LanguageToggleFAB(),
     );
   }
 }
 
-class RestaurantHomePage extends StatelessWidget {
+class RestaurantHomePage extends StatefulWidget {
   const RestaurantHomePage({Key? key}) : super(key: key);
+
+  @override
+  State<RestaurantHomePage> createState() => _RestaurantHomePageState();
+}
+
+class _RestaurantHomePageState extends State<RestaurantHomePage> {
+  final SupabaseService _supabaseService = SupabaseService();
+  String _username = '';
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserName();
+  }
+
+  Future<void> _loadUserName() async {
+    try {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final userId = authProvider.user?.id;
+
+      if (userId != null) {
+        final profile = await _supabaseService.getUserProfile(userId);
+        if (profile != null && profile['full_name'] != null) {
+          setState(() {
+            _username = profile['full_name'];
+            _isLoading = false;
+          });
+        } else {
+          setState(() {
+            _username = 'restaurant_staff'.tr(context);
+            _isLoading = false;
+          });
+        }
+      } else {
+        setState(() {
+          _username = 'restaurant_staff'.tr(context);
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _username = 'restaurant_staff'.tr(context);
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -89,7 +137,7 @@ class RestaurantHomePage extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Welcome, Restaurant Staff',
+            'welcome'.tr(context) + ', ' + _username,
             style: AppTheme.headlineMedium,
           ),
           const SizedBox(height: 24),
@@ -100,7 +148,7 @@ class RestaurantHomePage extends StatelessWidget {
               Expanded(
                 child: _buildStatCard(
                   context,
-                  'Today\'s Meals',
+                  'today_meals'.tr(context),
                   '178',
                   Icons.restaurant,
                   Colors.orange,
@@ -110,7 +158,7 @@ class RestaurantHomePage extends StatelessWidget {
               Expanded(
                 child: _buildStatCard(
                   context,
-                  'Attendance Rate',
+                  'attendance_rate'.tr(context),
                   '85%',
                   Icons.people,
                   Colors.green,
@@ -124,7 +172,7 @@ class RestaurantHomePage extends StatelessWidget {
               Expanded(
                 child: _buildStatCard(
                   context,
-                  'Pending Verifications',
+                  'pending_verifications'.tr(context),
                   '12',
                   Icons.pending_actions,
                   Colors.blue,
@@ -134,7 +182,7 @@ class RestaurantHomePage extends StatelessWidget {
               Expanded(
                 child: _buildStatCard(
                   context,
-                  'Special Meals',
+                  'special_meals'.tr(context),
                   '5',
                   Icons.room_service,
                   Colors.purple,
@@ -145,7 +193,7 @@ class RestaurantHomePage extends StatelessWidget {
           const SizedBox(height: 24),
 
           Text(
-            'Today\'s Menu',
+            'today_menu'.tr(context),
             style: AppTheme.titleLarge,
           ),
           const SizedBox(height: 16),
@@ -155,7 +203,7 @@ class RestaurantHomePage extends StatelessWidget {
 
           const SizedBox(height: 24),
           Text(
-            'Recent Activity',
+            'recent_activity'.tr(context),
             style: AppTheme.titleLarge,
           ),
           const SizedBox(height: 16),
@@ -163,25 +211,28 @@ class RestaurantHomePage extends StatelessWidget {
           // Recent Activity
           _buildActivityItem(
             context,
-            'Meal Verified',
-            'Student ID: ST12345 - Breakfast',
-            '5 minutes ago',
+            'meal_verified'.tr(context),
+            'student_meal'
+                .tr(context)
+                .replaceFirst('{0}', 'ST12345')
+                .replaceFirst('{1}', 'breakfast'.tr(context)),
+            'minutes_ago'.tr(context).replaceFirst('{0}', '5'),
             Icons.check_circle,
             Colors.green,
           ),
           _buildActivityItem(
             context,
-            'Special Meal Request',
-            'Student ID: ST54321 - Dietary Restrictions',
-            '30 minutes ago',
+            'special_meal_request'.tr(context),
+            'dietary_restrictions'.tr(context).replaceFirst('{0}', 'ST54321'),
+            'minutes_ago'.tr(context).replaceFirst('{0}', '30'),
             Icons.room_service,
             Colors.orange,
           ),
           _buildActivityItem(
             context,
-            'Attendance Mismatch',
-            'Student ID: ST98765 - No attendance record',
-            '1 hour ago',
+            'attendance_mismatch'.tr(context),
+            'no_attendance_record'.tr(context).replaceFirst('{0}', 'ST98765'),
+            'hours_ago'.tr(context).replaceFirst('{0}', '1'),
             Icons.warning,
             Colors.red,
           ),
@@ -254,7 +305,7 @@ class RestaurantHomePage extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Menu for Today',
+                  'menu_for_today'.tr(context),
                   style: AppTheme.titleMedium.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
@@ -271,34 +322,49 @@ class RestaurantHomePage extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 16),
-            _buildMealSection('Breakfast (7:00 AM - 9:00 AM)', [
-              'Scrambled Eggs',
-              'Toast with Butter and Jam',
-              'Fresh Fruit Platter',
-              'Cereal with Milk',
-              'Coffee, Tea, Juice',
-            ]),
+            _buildMealSection(
+                'breakfast_time'
+                    .tr(context)
+                    .replaceFirst('{0}', '7:00 AM')
+                    .replaceFirst('{1}', '9:00 AM'),
+                [
+                  'scrambled_eggs'.tr(context),
+                  'toast_butter_jam'.tr(context),
+                  'fresh_fruit'.tr(context),
+                  'cereal_milk'.tr(context),
+                  'beverages'.tr(context),
+                ]),
             const Divider(),
-            _buildMealSection('Lunch (12:00 PM - 2:00 PM)', [
-              'Grilled Chicken Sandwich',
-              'Vegetable Soup',
-              'Garden Salad',
-              'French Fries',
-              'Assorted Desserts',
-              'Water, Soda, Juice',
-            ]),
+            _buildMealSection(
+                'lunch_time'
+                    .tr(context)
+                    .replaceFirst('{0}', '12:00 PM')
+                    .replaceFirst('{1}', '2:00 PM'),
+                [
+                  'chicken_sandwich'.tr(context),
+                  'vegetable_soup'.tr(context),
+                  'garden_salad'.tr(context),
+                  'french_fries'.tr(context),
+                  'assorted_desserts'.tr(context),
+                  'beverages'.tr(context),
+                ]),
             const Divider(),
-            _buildMealSection('Dinner (6:00 PM - 8:00 PM)', [
-              'Pasta with Marinara Sauce',
-              'Garlic Bread',
-              'Steamed Vegetables',
-              'Caesar Salad',
-              'Ice Cream',
-              'Water, Soda, Coffee, Tea',
-            ]),
+            _buildMealSection(
+                'dinner_time'
+                    .tr(context)
+                    .replaceFirst('{0}', '6:00 PM')
+                    .replaceFirst('{1}', '8:00 PM'),
+                [
+                  'pasta_marinara'.tr(context),
+                  'garlic_bread'.tr(context),
+                  'steamed_vegetables'.tr(context),
+                  'caesar_salad'.tr(context),
+                  'ice_cream'.tr(context),
+                  'beverages'.tr(context),
+                ]),
             const SizedBox(height: 16),
             Text(
-              'Special Dietary Options Available Upon Request',
+              'special_dietary_options'.tr(context),
               style: AppTheme.bodySmall.copyWith(
                 fontStyle: FontStyle.italic,
                 color: AppTheme.textSecondaryColor,
@@ -408,12 +474,12 @@ class MealVerificationPage extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           Text(
-            'Scan Student QR Code',
+            'scan_student_qr'.tr(context),
             style: AppTheme.headlineMedium,
           ),
           const SizedBox(height: 16),
           Text(
-            'Position the QR code within the scanner',
+            'position_qr_code'.tr(context),
             style: AppTheme.bodyLarge.copyWith(
               color: AppTheme.textSecondaryColor,
             ),
@@ -425,7 +491,7 @@ class MealVerificationPage extends StatelessWidget {
               // TODO: Implement QR scanner
             },
             icon: const Icon(Icons.camera_alt),
-            label: const Text('Start Scanning'),
+            label: Text('start_scanning'.tr(context)),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.restaurantColor,
               foregroundColor: Colors.white,
@@ -445,7 +511,7 @@ class ReportsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Text(
-        'Reports Page',
+        'reports_page'.tr(context),
         style: AppTheme.headlineMedium,
       ),
     );

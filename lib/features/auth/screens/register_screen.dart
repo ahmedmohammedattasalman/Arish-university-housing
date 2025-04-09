@@ -8,6 +8,7 @@ import '../../../core/widgets/custom_button.dart';
 import '../../../core/widgets/custom_text_field.dart';
 import '../providers/auth_provider.dart';
 import '../../../core/widgets/language_toggle_button.dart';
+import '../../../core/localization/string_extensions.dart';
 
 class RegisterScreen extends StatefulWidget {
   final VoidCallback onLoginPressed;
@@ -42,27 +43,27 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   final List<Map<String, dynamic>> _roles = [
     {
-      'title': 'Student',
+      'title': 'student',
       'value': AppConstants.roleStudent,
       'icon': Icons.school,
     },
     {
-      'title': 'Supervisor',
+      'title': 'supervisor',
       'value': AppConstants.roleSupervisor,
       'icon': Icons.supervisor_account,
     },
     {
-      'title': 'Admin',
+      'title': 'admin',
       'value': AppConstants.roleAdmin,
       'icon': Icons.admin_panel_settings,
     },
     {
-      'title': 'Labor',
+      'title': 'labor',
       'value': AppConstants.roleLabor,
       'icon': Icons.construction,
     },
     {
-      'title': 'Restaurant Staff',
+      'title': 'restaurant',
       'value': AppConstants.roleRestaurant,
       'icon': Icons.restaurant,
     },
@@ -112,9 +113,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
       // Verify admin password
       if (_adminPasswordController.text.trim() != _requiredAdminPassword) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content:
-                Text('Incorrect admin password. Registration not allowed.'),
+          SnackBar(
+            content: Text('incorrect_admin_password'.tr(context)),
             backgroundColor: Colors.red,
           ),
         );
@@ -139,7 +139,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
       } else if (_selectedRole == AppConstants.roleAdmin) {
         userData['employee_id'] = _idController.text.trim();
         userData['department'] = _departmentController.text.trim();
-        userData['access_level'] = 'Full Access'; // Default for new admins
+        userData['access_level'] =
+            'full_access'.tr(context); // Default for new admins
       } else if (_selectedRole == AppConstants.roleLabor) {
         userData['employee_id'] = _idController.text.trim();
         userData['department'] = _departmentController.text.trim();
@@ -164,15 +165,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
             context: context,
             barrierDismissible: false,
             builder: (context) => AlertDialog(
-              title: const Text('Registration Successful'),
+              title: Text('registration_successful'.tr(context)),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
-                  Text('Your account has been created successfully!'),
+                children: [
+                  Text('account_created_successfully'.tr(context)),
                   SizedBox(height: 16),
-                  Text(
-                      'Please check your email to verify your account before logging in.'),
+                  Text('verify_email_instructions'.tr(context)),
                 ],
               ),
               actions: [
@@ -182,7 +182,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     // Go to login screen
                     widget.onLoginPressed();
                   },
-                  child: const Text('Go to Login'),
+                  child: Text('go_to_login'.tr(context)),
                 ),
               ],
             ),
@@ -191,7 +191,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
           // Show error message
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(authProvider.errorMessage ?? 'Registration failed'),
+              content: Text(authProvider.errorMessage ??
+                  'registration_failed'.tr(context)),
               backgroundColor: AppTheme.errorColor,
             ),
           );
@@ -253,7 +254,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       FadeInDown(
                         duration: const Duration(milliseconds: 800),
                         child: Text(
-                          'Create Account',
+                          'register'.tr(context),
                           style: AppTheme.headlineSmall.copyWith(
                             fontWeight: FontWeight.bold,
                             letterSpacing: 0.5,
@@ -285,7 +286,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       child: Column(
                         children: [
                           Text(
-                            'Join University Housing',
+                            'join_housing'.tr(context),
                             style: AppTheme.titleLarge.copyWith(
                               fontWeight: FontWeight.bold,
                             ),
@@ -293,7 +294,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'Select your role and create your account',
+                            'select_role_prompt'.tr(context),
                             style: AppTheme.bodyMedium.copyWith(
                               color: AppTheme.textSecondaryColor,
                             ),
@@ -326,7 +327,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Select your role',
+                            'select_role'.tr(context),
                             style: AppTheme.titleMedium.copyWith(
                               fontWeight: FontWeight.w600,
                             ),
@@ -388,7 +389,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                           ),
                                           const SizedBox(height: 8),
                                           Text(
-                                            role['title'],
+                                            _getRoleTitle(
+                                                context, role['title']),
                                             style: AppTheme.bodyMedium.copyWith(
                                               fontWeight: isSelected
                                                   ? FontWeight.bold
@@ -439,7 +441,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                               Text(
-                                'Personal Information',
+                                'personal_info'.tr(context),
                                 style: AppTheme.titleMedium.copyWith(
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -448,8 +450,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                               // Full Name
                               _buildTextField(
-                                label: 'Full Name',
-                                hint: 'Enter your full name',
+                                label: 'name'.tr(context),
+                                hint: 'enter_name'.tr(context),
                                 controller: _nameController,
                                 textInputAction: TextInputAction.next,
                                 prefixIcon: Icons.person_outline,
@@ -460,8 +462,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                               // Email
                               _buildTextField(
-                                label: 'Email',
-                                hint: 'Enter your email',
+                                label: 'email'.tr(context),
+                                hint: 'enter_email'.tr(context),
                                 controller: _emailController,
                                 keyboardType: TextInputType.emailAddress,
                                 textInputAction: TextInputAction.next,
@@ -474,15 +476,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               // ID (Student ID / Employee ID)
                               _buildTextField(
                                 label: _selectedRole == AppConstants.roleStudent
-                                    ? 'Student ID'
-                                    : 'Employee ID',
-                                hint: 'Enter your ID number',
+                                    ? 'student_id'.tr(context)
+                                    : 'employee_id'.tr(context),
+                                hint: 'enter_id'.tr(context),
                                 controller: _idController,
                                 textInputAction: TextInputAction.next,
                                 prefixIcon: Icons.badge_outlined,
                                 validator: (value) =>
                                     value == null || value.isEmpty
-                                        ? 'ID is required'
+                                        ? 'id_required'.tr(context)
                                         : null,
                                 enabled: !isLoading,
                               ),
@@ -490,8 +492,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                               // Phone Number
                               _buildTextField(
-                                label: 'Phone Number',
-                                hint: 'Enter your phone number',
+                                label: 'phone'.tr(context),
+                                hint: 'enter_phone'.tr(context),
                                 controller: _phoneController,
                                 keyboardType: TextInputType.phone,
                                 textInputAction: TextInputAction.next,
@@ -505,7 +507,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               const SizedBox(height: 16),
 
                               Text(
-                                'Role Information',
+                                'role_info'.tr(context),
                                 style: AppTheme.titleMedium.copyWith(
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -517,13 +519,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   AppConstants.roleStudent) ...[
                                 // Room Number
                                 _buildTextField(
-                                  label: 'Room Number',
-                                  hint: 'Enter your room number',
+                                  label: 'room_number'.tr(context),
+                                  hint: 'room_prompt'.tr(context),
                                   controller: _roomNumberController,
                                   textInputAction: TextInputAction.next,
                                   prefixIcon: Icons.meeting_room_outlined,
                                   validator: (value) => value?.isEmpty ?? true
-                                      ? 'Room number is required'
+                                      ? 'id_required'.tr(context)
                                       : null,
                                   enabled: !isLoading,
                                 ),
@@ -531,13 +533,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                                 // Program/Major
                                 _buildTextField(
-                                  label: 'Program/Major',
-                                  hint: 'Enter your program or major',
+                                  label: 'program'.tr(context),
+                                  hint: 'program_prompt'.tr(context),
                                   controller: _programController,
                                   textInputAction: TextInputAction.next,
                                   prefixIcon: Icons.school_outlined,
                                   validator: (value) => value?.isEmpty ?? true
-                                      ? 'Program is required'
+                                      ? 'id_required'.tr(context)
                                       : null,
                                   enabled: !isLoading,
                                 ),
@@ -547,13 +549,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   _selectedRole == AppConstants.roleLabor) ...[
                                 // Department
                                 _buildTextField(
-                                  label: 'Department',
-                                  hint: 'Enter your department',
+                                  label: 'department'.tr(context),
+                                  hint: 'department_prompt'.tr(context),
                                   controller: _departmentController,
                                   textInputAction: TextInputAction.next,
                                   prefixIcon: Icons.business_outlined,
                                   validator: (value) => value?.isEmpty ?? true
-                                      ? 'Department is required'
+                                      ? 'id_required'.tr(context)
                                       : null,
                                   enabled: !isLoading,
                                 ),
@@ -561,13 +563,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   AppConstants.roleRestaurant) ...[
                                 // Position
                                 _buildTextField(
-                                  label: 'Position',
-                                  hint: 'Enter your position',
+                                  label: 'position'.tr(context),
+                                  hint: 'position_prompt'.tr(context),
                                   controller: _departmentController,
                                   textInputAction: TextInputAction.next,
                                   prefixIcon: Icons.work_outline,
                                   validator: (value) => value?.isEmpty ?? true
-                                      ? 'Position is required'
+                                      ? 'id_required'.tr(context)
                                       : null,
                                   enabled: !isLoading,
                                 ),
@@ -575,13 +577,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                                 // Dining Hall
                                 _buildTextField(
-                                  label: 'Dining Hall',
-                                  hint: 'Enter your dining hall',
+                                  label: 'dining_hall'.tr(context),
+                                  hint: 'dining_hall_prompt'.tr(context),
                                   controller: _roomNumberController,
                                   textInputAction: TextInputAction.next,
                                   prefixIcon: Icons.restaurant_outlined,
                                   validator: (value) => value?.isEmpty ?? true
-                                      ? 'Dining hall is required'
+                                      ? 'id_required'.tr(context)
                                       : null,
                                   enabled: !isLoading,
                                 ),
@@ -592,7 +594,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               const SizedBox(height: 16),
 
                               Text(
-                                'Security',
+                                'security'.tr(context),
                                 style: AppTheme.titleMedium.copyWith(
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -601,8 +603,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                               // Password
                               _buildPasswordField(
-                                label: 'Password',
-                                hint: 'Create a password',
+                                label: 'password'.tr(context),
+                                hint: 'create_password'.tr(context),
                                 controller: _passwordController,
                                 textInputAction: TextInputAction.next,
                                 isPasswordVisible: _isPasswordVisible,
@@ -614,8 +616,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                               // Confirm Password
                               _buildPasswordField(
-                                label: 'Confirm Password',
-                                hint: 'Confirm your password',
+                                label: 'confirm_password'.tr(context),
+                                hint: 'confirm_password_hint'.tr(context),
                                 controller: _confirmPasswordController,
                                 textInputAction: TextInputAction.done,
                                 isPasswordVisible: _isConfirmPasswordVisible,
@@ -656,7 +658,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                           ),
                                           const SizedBox(width: 8),
                                           Text(
-                                            'Admin Authentication Required',
+                                            'admin_auth_required'.tr(context),
                                             style: TextStyle(
                                               fontWeight: FontWeight.bold,
                                               color: Colors.amber[800],
@@ -665,14 +667,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                         ],
                                       ),
                                       const SizedBox(height: 8),
-                                      const Text(
-                                        'Only authorized administrators can register new users',
-                                        style: TextStyle(fontSize: 14),
+                                      Text(
+                                        'admin_auth_message'.tr(context),
+                                        style: const TextStyle(fontSize: 14),
                                       ),
                                       const SizedBox(height: 16),
                                       _buildPasswordField(
-                                        label: 'Admin Password',
-                                        hint: 'Enter admin password',
+                                        label: 'admin_password'.tr(context),
+                                        hint:
+                                            'enter_admin_password'.tr(context),
                                         controller: _adminPasswordController,
                                         textInputAction: TextInputAction.done,
                                         isPasswordVisible:
@@ -682,7 +685,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                         validator: (value) =>
                                             Validators.validateRequired(
                                           value,
-                                          'Admin Password',
+                                          'admin_password'.tr(context),
                                         ),
                                         enabled: !isLoading,
                                       ),
@@ -731,8 +734,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                         const SizedBox(width: 8),
                                         Text(
                                           isLoading
-                                              ? 'Creating Account...'
-                                              : 'Create Account',
+                                              ? 'creating_account'.tr(context)
+                                              : 'create_account'.tr(context),
                                           style: const TextStyle(
                                             fontSize: 16,
                                             fontWeight: FontWeight.bold,
@@ -754,7 +757,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     Text(
-                                      'Already have an account?',
+                                      'have_account'.tr(context),
                                       style: AppTheme.bodyMedium,
                                     ),
                                     TextButton(
@@ -762,7 +765,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                           ? null
                                           : widget.onLoginPressed,
                                       child: Text(
-                                        'Sign In',
+                                        'login'.tr(context),
                                         style: AppTheme.bodyMedium.copyWith(
                                           color: AppTheme.primaryColor,
                                           fontWeight: FontWeight.bold,
@@ -898,5 +901,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ),
       ],
     );
+  }
+
+  String _getRoleTitle(BuildContext context, String title) {
+    // Use a more direct approach to translations
+    switch (title) {
+      case 'student':
+        return 'role_title_student'.tr(context);
+      case 'supervisor':
+        return 'role_title_supervisor'.tr(context);
+      case 'admin':
+        return 'role_title_admin'.tr(context);
+      case 'labor':
+        return 'role_title_labor'.tr(context);
+      case 'restaurant':
+        return 'role_title_restaurant'.tr(context);
+      default:
+        return title;
+    }
   }
 }

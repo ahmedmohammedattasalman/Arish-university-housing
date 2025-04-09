@@ -8,6 +8,7 @@ import 'features/auth/providers/auth_provider.dart';
 import 'features/auth/screens/auth_wrapper.dart';
 import 'core/localization/app_localizations.dart';
 import 'core/localization/language_provider.dart';
+import 'features/requests/providers/request_provider.dart';
 
 void main() {
   // This must be called before any other Flutter code
@@ -39,8 +40,17 @@ Future<void> initializeApp() async {
     // Handle initialization errors
     debugPrint('Error during initialization: $e');
 
+    // Special handling for asset loading errors
+    String errorMsg = e.toString();
+    if (errorMsg.contains('AssetManifest.json') ||
+        errorMsg.contains('Failed to fetch') ||
+        errorMsg.contains('assets/lang')) {
+      errorMsg =
+          'Failed to load application assets. If running in web mode, please make sure your server is configured correctly for Flutter web assets.';
+    }
+
     // Run app with error state
-    runApp(ErrorApp(error: e.toString()));
+    runApp(ErrorApp(error: errorMsg));
   }
 }
 
@@ -140,6 +150,7 @@ class _MyAppState extends State<MyApp> {
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider.value(value: _languageProvider),
+        ChangeNotifierProvider(create: (_) => RequestProvider()),
       ],
       child: Consumer2<AuthProvider, LanguageProvider>(
         builder: (context, authProvider, languageProvider, _) {

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../localization/language_provider.dart';
+import '../localization/string_extensions.dart';
 
+/// A button widget that toggles between Arabic and English language
 class LanguageToggleButton extends StatelessWidget {
   const LanguageToggleButton({Key? key}) : super(key: key);
 
@@ -10,24 +12,18 @@ class LanguageToggleButton extends StatelessWidget {
     final languageProvider = Provider.of<LanguageProvider>(context);
     final isArabic = languageProvider.isArabic;
 
-    return ElevatedButton(
+    return IconButton(
+      icon: Text(
+        isArabic ? 'En' : 'Ar',
+        style: const TextStyle(
+          fontWeight: FontWeight.bold,
+          fontSize: 16,
+        ),
+      ),
+      tooltip: isArabic ? 'Switch to English' : 'التبديل إلى العربية',
       onPressed: () {
         languageProvider.toggleLanguage();
       },
-      style: ElevatedButton.styleFrom(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.language, size: 18),
-          const SizedBox(width: 8),
-          Text(isArabic ? 'English' : 'العربية'),
-        ],
-      ),
     );
   }
 }
@@ -45,7 +41,7 @@ class LanguageToggleFAB extends StatelessWidget {
       onPressed: () {
         languageProvider.toggleLanguage();
       },
-      tooltip: isArabic ? 'Switch to English' : 'التبديل إلى العربية',
+      tooltip: isArabic ? 'english'.tr(context) : 'arabic'.tr(context),
       child: const Icon(Icons.language),
     );
   }

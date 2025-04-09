@@ -4,6 +4,8 @@ import '../../../core/theme/app_theme.dart';
 import '../../../features/auth/providers/auth_provider.dart';
 import '../../../features/auth/screens/profile_screen.dart';
 import '../../../core/widgets/language_toggle_button.dart';
+import '../../../core/localization/string_extensions.dart';
+import '../../../core/services/supabase_service.dart';
 
 class LaborDashboard extends StatefulWidget {
   const LaborDashboard({Key? key}) : super(key: key);
@@ -34,12 +36,12 @@ class _LaborDashboardState extends State<LaborDashboard> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Maintenance Dashboard'),
+        title: Text('labor'.tr(context)),
         backgroundColor: AppTheme.laborColor,
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
-            tooltip: 'Logout',
+            tooltip: 'logout'.tr(context),
             onPressed: () {
               authProvider.signOut();
             },
@@ -54,32 +56,78 @@ class _LaborDashboardState extends State<LaborDashboard> {
         backgroundColor: Colors.white,
         selectedItemColor: AppTheme.laborColor,
         unselectedItemColor: AppTheme.textSecondaryColor,
-        items: const [
+        items: [
           BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
+            icon: const Icon(Icons.home),
+            label: 'dashboard'.tr(context),
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.cleaning_services),
-            label: 'Requests',
+            icon: const Icon(Icons.cleaning_services),
+            label: 'cleaning_request'.tr(context),
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.assignment),
-            label: 'Tasks',
+            icon: const Icon(Icons.assignment),
+            label: 'tasks'.tr(context),
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Profile',
+            icon: const Icon(Icons.person),
+            label: 'profile'.tr(context),
           ),
         ],
       ),
-      floatingActionButton: const LanguageToggleFAB(),
     );
   }
 }
 
-class LaborHomePage extends StatelessWidget {
+class LaborHomePage extends StatefulWidget {
   const LaborHomePage({Key? key}) : super(key: key);
+
+  @override
+  State<LaborHomePage> createState() => _LaborHomePageState();
+}
+
+class _LaborHomePageState extends State<LaborHomePage> {
+  final SupabaseService _supabaseService = SupabaseService();
+  String _username = '';
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserName();
+  }
+
+  Future<void> _loadUserName() async {
+    try {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final userId = authProvider.user?.id;
+
+      if (userId != null) {
+        final profile = await _supabaseService.getUserProfile(userId);
+        if (profile != null && profile['full_name'] != null) {
+          setState(() {
+            _username = profile['full_name'];
+            _isLoading = false;
+          });
+        } else {
+          setState(() {
+            _username = 'maintenance_staff'.tr(context);
+            _isLoading = false;
+          });
+        }
+      } else {
+        setState(() {
+          _username = 'maintenance_staff'.tr(context);
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _username = 'maintenance_staff'.tr(context);
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -89,7 +137,7 @@ class LaborHomePage extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Welcome, Maintenance Staff',
+            'welcome'.tr(context) + ', ' + _username,
             style: AppTheme.headlineMedium,
           ),
           const SizedBox(height: 24),
@@ -100,7 +148,7 @@ class LaborHomePage extends StatelessWidget {
               Expanded(
                 child: _buildStatCard(
                   context,
-                  'Pending Requests',
+                  'pending_requests'.tr(context),
                   '8',
                   Icons.pending_actions,
                   Colors.orange,
@@ -110,7 +158,7 @@ class LaborHomePage extends StatelessWidget {
               Expanded(
                 child: _buildStatCard(
                   context,
-                  'Completed Today',
+                  'completed_today'.tr(context),
                   '5',
                   Icons.check_circle,
                   Colors.green,
@@ -124,7 +172,7 @@ class LaborHomePage extends StatelessWidget {
               Expanded(
                 child: _buildStatCard(
                   context,
-                  'Scheduled Tasks',
+                  'scheduled_tasks'.tr(context),
                   '3',
                   Icons.event,
                   Colors.blue,
@@ -134,7 +182,7 @@ class LaborHomePage extends StatelessWidget {
               Expanded(
                 child: _buildStatCard(
                   context,
-                  'High Priority',
+                  'high_priority'.tr(context),
                   '2',
                   Icons.priority_high,
                   Colors.red,
@@ -145,7 +193,7 @@ class LaborHomePage extends StatelessWidget {
           const SizedBox(height: 24),
 
           Text(
-            'Today\'s Tasks',
+            'today_tasks'.tr(context),
             style: AppTheme.titleLarge,
           ),
           const SizedBox(height: 16),
@@ -153,32 +201,35 @@ class LaborHomePage extends StatelessWidget {
           // Placeholder for tasks
           _buildTaskItem(
             context,
-            'Room 204 Cleaning',
-            'High',
-            'John Smith requested cleaning service',
-            'Block A',
+            'room_cleaning'.tr(context).replaceFirst('{0}', '204'),
+            'high'.tr(context),
+            'cleaning_service_requested'.tr(context),
+            'block_a'.tr(context),
             Colors.red,
           ),
           _buildTaskItem(
             context,
-            'Fix Broken Lock',
-            'Medium',
-            'Door lock needs repair',
-            'Block B, Room 115',
+            'fix_broken_lock'.tr(context),
+            'medium'.tr(context),
+            'door_lock_repair'.tr(context),
+            'block_room'
+                .tr(context)
+                .replaceFirst('{0}', 'B')
+                .replaceFirst('{1}', '115'),
             Colors.orange,
           ),
           _buildTaskItem(
             context,
-            'AC Maintenance',
-            'Low',
-            'Regular AC filter cleaning',
-            'Common Area',
+            'ac_maintenance'.tr(context),
+            'low'.tr(context),
+            'ac_filter_cleaning'.tr(context),
+            'common_area'.tr(context),
             Colors.green,
           ),
 
           const SizedBox(height: 24),
           Text(
-            'Maintenance Schedule',
+            'maintenance_schedule'.tr(context),
             style: AppTheme.titleLarge,
           ),
           const SizedBox(height: 16),
@@ -194,35 +245,35 @@ class LaborHomePage extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Weekly Schedule',
+                    'weekly_schedule'.tr(context),
                     style: AppTheme.titleMedium.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   const SizedBox(height: 16),
                   _buildScheduleItem(
-                    'Monday',
-                    'Block A Inspection',
+                    'monday'.tr(context),
+                    'block_inspection'.tr(context).replaceFirst('{0}', 'A'),
                     '9:00 AM - 11:00 AM',
                   ),
                   _buildScheduleItem(
-                    'Tuesday',
-                    'Block B Cleaning',
+                    'tuesday'.tr(context),
+                    'block_cleaning'.tr(context).replaceFirst('{0}', 'B'),
                     '10:00 AM - 12:00 PM',
                   ),
                   _buildScheduleItem(
-                    'Wednesday',
-                    'Common Areas Maintenance',
+                    'wednesday'.tr(context),
+                    'common_areas_maintenance'.tr(context),
                     '9:00 AM - 1:00 PM',
                   ),
                   _buildScheduleItem(
-                    'Thursday',
-                    'Block C Inspection',
+                    'thursday'.tr(context),
+                    'block_inspection'.tr(context).replaceFirst('{0}', 'C'),
                     '11:00 AM - 1:00 PM',
                   ),
                   _buildScheduleItem(
-                    'Friday',
-                    'Equipment Check',
+                    'friday'.tr(context),
+                    'equipment_check'.tr(context),
                     '2:00 PM - 4:00 PM',
                   ),
                 ],
@@ -361,7 +412,7 @@ class LaborHomePage extends StatelessWidget {
                     side: BorderSide(color: AppTheme.laborColor),
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                   ),
-                  child: const Text('View Details'),
+                  child: Text('view_details'.tr(context)),
                 ),
                 const SizedBox(width: 8),
                 ElevatedButton(
@@ -373,7 +424,7 @@ class LaborHomePage extends StatelessWidget {
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                   ),
-                  child: const Text('Mark Complete'),
+                  child: Text('mark_complete'.tr(context)),
                 ),
               ],
             ),
@@ -429,7 +480,7 @@ class CleaningRequestsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Text(
-        'Cleaning Requests Page',
+        'cleaning_requests_page'.tr(context),
         style: AppTheme.headlineMedium,
       ),
     );
@@ -443,7 +494,7 @@ class TasksPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Text(
-        'Tasks Page',
+        'tasks_page'.tr(context),
         style: AppTheme.headlineMedium,
       ),
     );
