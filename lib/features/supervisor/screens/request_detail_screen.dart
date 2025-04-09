@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter/services.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../../../features/auth/providers/auth_provider.dart';
 import '../../requests/models/request_model.dart';
 import '../../requests/providers/request_provider.dart';
+import '../../../features/notifications/services/notification_service.dart';
+import '../../../core/services/supabase_service.dart';
 
 class RequestDetailScreen extends StatelessWidget {
   final Request request;
@@ -491,10 +494,38 @@ class RequestDetailScreen extends StatelessWidget {
       if (supervisorId != null) {
         final requestProvider =
             Provider.of<RequestProvider>(context, listen: false);
+
+        // Get supervisor name if available
+        String? supervisorName;
+        try {
+          final supabaseService = SupabaseService();
+          final supervisorData = await supabaseService.client
+              .from('profiles')
+              .select('full_name')
+              .eq('id', supervisorId)
+              .single();
+          supervisorName = supervisorData['full_name'] as String?;
+        } catch (e) {
+          debugPrint('Error fetching supervisor name: $e');
+        }
+
+        // Create a direct notification service instance
+        final notificationService = NotificationService();
+
         await requestProvider.updateRequestStatus(
           requestId: request.id,
           status: RequestStatus.approved,
           supervisorId: supervisorId,
+          notes: notesController.text.isNotEmpty ? notesController.text : null,
+        );
+
+        // Create notification for the request owner
+        await notificationService.createRequestStatusNotification(
+          userId: request.userId,
+          requestId: request.id,
+          requestType: request.type.toString().split('.').last,
+          newStatus: RequestStatus.approved.toString().split('.').last,
+          supervisorName: supervisorName,
           notes: notesController.text.isNotEmpty ? notesController.text : null,
         );
 
@@ -573,10 +604,38 @@ class RequestDetailScreen extends StatelessWidget {
       if (supervisorId != null) {
         final requestProvider =
             Provider.of<RequestProvider>(context, listen: false);
+
+        // Get supervisor name if available
+        String? supervisorName;
+        try {
+          final supabaseService = SupabaseService();
+          final supervisorData = await supabaseService.client
+              .from('profiles')
+              .select('full_name')
+              .eq('id', supervisorId)
+              .single();
+          supervisorName = supervisorData['full_name'] as String?;
+        } catch (e) {
+          debugPrint('Error fetching supervisor name: $e');
+        }
+
+        // Create a direct notification service instance
+        final notificationService = NotificationService();
+
         await requestProvider.updateRequestStatus(
           requestId: request.id,
           status: RequestStatus.rejected,
           supervisorId: supervisorId,
+          notes: reasonController.text,
+        );
+
+        // Create notification for the request owner
+        await notificationService.createRequestStatusNotification(
+          userId: request.userId,
+          requestId: request.id,
+          requestType: request.type.toString().split('.').last,
+          newStatus: RequestStatus.rejected.toString().split('.').last,
+          supervisorName: supervisorName,
           notes: reasonController.text,
         );
 

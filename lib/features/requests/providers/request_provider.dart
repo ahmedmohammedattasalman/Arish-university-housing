@@ -3,9 +3,11 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/request_model.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/config/constants.dart';
+import '../../../features/notifications/services/notification_service.dart';
 
 class RequestProvider extends ChangeNotifier {
   final SupabaseService _supabaseService = SupabaseService();
+  final NotificationService _notificationService = NotificationService();
 
   // Lists to store requests by status
   List<Request> _userRequests = [];
@@ -127,10 +129,45 @@ class RequestProvider extends ChangeNotifier {
         data['notes'] = notes;
       }
 
+      // Get the request details before updating
+      final requestResponse = await _supabaseService.client
+          .from(AppConstants.requestsCollection)
+          .select()
+          .eq('id', requestId)
+          .single();
+
+      final request = Request.fromJson(requestResponse);
+
+      // Update the request status
       await _supabaseService.client
           .from(AppConstants.requestsCollection)
           .update(data)
           .eq('id', requestId);
+
+      // Get supervisor name if available
+      String? supervisorName;
+      if (supervisorId != null) {
+        try {
+          final supervisorData = await _supabaseService.client
+              .from(AppConstants.profilesCollection)
+              .select('full_name')
+              .eq('id', supervisorId)
+              .single();
+          supervisorName = supervisorData['full_name'] as String?;
+        } catch (e) {
+          debugPrint('Error fetching supervisor name: $e');
+        }
+      }
+
+      // Create notification for the request owner
+      await _notificationService.createRequestStatusNotification(
+        userId: request.userId,
+        requestId: requestId,
+        requestType: request.type.displayName,
+        newStatus: status.displayName,
+        supervisorName: supervisorName,
+        notes: notes,
+      );
 
       // Update local lists
       _updateRequestInLists(requestId, status, supervisorId, notes);

@@ -17,6 +17,7 @@ class AppConstants {
   static const String profilesCollection = 'profiles';
   static const String usersCollection = 'users';
   static const String requestsCollection = 'requests';
+  static const String notificationsCollection = 'notifications';
   static const String attendanceCollection = 'attendance';
   static const String qrCodesCollection = 'qr_codes';
   static const String paymentsCollection = 'payments';

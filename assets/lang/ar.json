@@ -262,5 +262,7 @@
   "last_updated": "آخر تحديث",
   "could_not_retrieve_profile": "تعذر استرجاع بيانات الملف الشخصي",
   "user_not_authenticated": "المستخدم غير مصادق عليه",
-  "error_loading_profile": "خطأ في تحميل الملف الشخصي"
+  "error_loading_profile": "خطأ في تحميل الملف الشخصي",
+  "no_requests": "لا توجد طلبات",
+  "create_new_request_prompt": "ليس لديك أي طلبات حتى الآن. استخدم زر + لإنشاء طلب جديد."
 } 

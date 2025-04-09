@@ -262,5 +262,7 @@
   "last_updated": "Last Updated",
   "could_not_retrieve_profile": "Could not retrieve user profile data",
   "user_not_authenticated": "User not authenticated",
-  "error_loading_profile": "Error loading profile"
+  "error_loading_profile": "Error loading profile",
+  "no_requests": "No Requests",
+  "create_new_request_prompt": "You don't have any requests yet. Use the + button to create a new request."
 } 

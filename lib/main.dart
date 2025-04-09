@@ -9,6 +9,7 @@ import 'features/auth/screens/auth_wrapper.dart';
 import 'core/localization/app_localizations.dart';
 import 'core/localization/language_provider.dart';
 import 'features/requests/providers/request_provider.dart';
+import 'features/notifications/providers/notification_provider.dart';
 
 void main() {
   // This must be called before any other Flutter code
@@ -150,7 +151,12 @@ class _MyAppState extends State<MyApp> {
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider.value(value: _languageProvider),
-        ChangeNotifierProvider(create: (_) => RequestProvider()),
+        ChangeNotifierProvider(
+          create: (_) => RequestProvider(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => NotificationProvider(),
+        ),
       ],
       child: Consumer2<AuthProvider, LanguageProvider>(
         builder: (context, authProvider, languageProvider, _) {

@@ -1,15 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/app_loading_indicator.dart';
+import '../../../core/localization/app_localizations.dart';
+import '../../../core/localization/string_extensions.dart';
+import '../../../core/localization/language_provider.dart';
+import '../../../core/services/supabase_service.dart';
 import '../../../features/auth/providers/auth_provider.dart';
 import '../../../features/auth/screens/profile_screen.dart';
-import '../../../core/localization/string_extensions.dart';
-import '../../../core/services/supabase_service.dart';
-import '../../../core/localization/language_provider.dart';
 import '../../../features/requests/providers/request_provider.dart';
 import '../../../features/requests/models/request_model.dart';
 import '../../../features/supervisor/screens/request_detail_screen.dart';
 import '../../../features/requests/screens/create_request_screen.dart';
+import '../../../features/notifications/providers/notification_provider.dart';
+import '../../../features/notifications/screens/notifications_screen.dart';
+import '../../../features/notifications/widgets/notification_list_item.dart';
+import '../../../features/notifications/models/notification_model.dart';
 
 class StudentDashboard extends StatefulWidget {
   const StudentDashboard({Key? key}) : super(key: key);
@@ -108,6 +114,7 @@ class _StudentHomePageState extends State<StudentHomePage>
   void initState() {
     super.initState();
     _loadUserName();
+    _loadNotifications();
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1000),
@@ -150,6 +157,22 @@ class _StudentHomePageState extends State<StudentHomePage>
         _username = 'student'.tr(context);
         _isLoading = false;
       });
+    }
+  }
+
+  Future<void> _loadNotifications() async {
+    try {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final userId = authProvider.user?.id;
+
+      if (userId != null) {
+        final notificationProvider =
+            Provider.of<NotificationProvider>(context, listen: false);
+        await notificationProvider.fetchUserNotifications(userId);
+        notificationProvider.setupNotificationsSubscription(userId);
+      }
+    } catch (e) {
+      debugPrint('Error loading notifications: $e');
     }
   }
 
@@ -547,117 +570,88 @@ class _StudentHomePageState extends State<StudentHomePage>
   }
 
   Widget _buildNotificationsList() {
-    return Column(
-      children: [
-        _buildEnhancedAnnouncementItem(
-          context,
-          'housing_maintenance'.tr(context),
-          'maintenance_description'.tr(context),
-          '2023-04-05',
-          Icons.build,
-          Colors.blue,
-        ),
-        const SizedBox(height: 12),
-        _buildEnhancedAnnouncementItem(
-          context,
-          'fee_payment_deadline'.tr(context),
-          'fee_payment_reminder'.tr(context),
-          '2023-04-01',
-          Icons.payments,
-          Colors.red,
-        ),
-      ],
-    );
-  }
+    return Consumer<NotificationProvider>(
+      builder: (context, notificationProvider, child) {
+        if (notificationProvider.isLoading) {
+          return const Center(child: AppLoadingIndicator());
+        }
 
-  Widget _buildEnhancedAnnouncementItem(
-    BuildContext context,
-    String title,
-    String description,
-    String date,
-    IconData icon,
-    Color iconColor,
-  ) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(16),
-          onTap: () {
-            // TODO: Navigate to announcement details
-          },
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+        if (notificationProvider.errorMessage != null) {
+          return Center(
+            child: Text(
+              notificationProvider.errorMessage!,
+              style: const TextStyle(color: Colors.red),
+            ),
+          );
+        }
+
+        if (notificationProvider.notifications.isEmpty) {
+          return Center(
+            child: Column(
               children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: iconColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(
-                    icon,
-                    color: iconColor,
-                    size: 24,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              title,
-                              style: AppTheme.titleMedium.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: Colors.grey.shade100,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              date,
-                              style: AppTheme.bodySmall.copyWith(
-                                color: AppTheme.textSecondaryColor,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        description,
-                        style: AppTheme.bodyMedium,
-                      ),
-                    ],
-                  ),
+                const Icon(Icons.notifications_off,
+                    size: 48, color: Colors.grey),
+                const SizedBox(height: 8),
+                Text(
+                  AppLocalizations.of(context)!.translate('no_notifications'),
+                  style: AppTheme.bodyMedium.copyWith(color: Colors.grey),
                 ),
               ],
             ),
-          ),
-        ),
+          );
+        }
+
+        // Take only the most recent 3 notifications
+        final recentNotifications =
+            notificationProvider.notifications.take(3).toList();
+
+        return Column(
+          children: [
+            ...recentNotifications
+                .map((notification) => Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: NotificationListItem(
+                        notification: notification,
+                        showActions: false,
+                        onTap: () => _navigateToNotifications(context),
+                      ),
+                    ))
+                .toList(),
+
+            // View all button
+            TextButton(
+              onPressed: () => _navigateToNotifications(context),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    AppLocalizations.of(context)!
+                        .translate('view_all_notifications'),
+                    style: TextStyle(
+                      color: AppTheme.studentColor,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Icon(
+                    Icons.arrow_forward,
+                    size: 16,
+                    color: AppTheme.studentColor,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _navigateToNotifications(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const NotificationsScreen(),
       ),
     );
   }

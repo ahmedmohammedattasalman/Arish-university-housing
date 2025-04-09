@@ -6,6 +6,7 @@ import '../../../features/auth/screens/profile_screen.dart';
 import '../../../core/widgets/language_toggle_button.dart';
 import '../../../core/localization/string_extensions.dart';
 import '../../../core/services/supabase_service.dart';
+import '../../../features/supervisor/screens/request_approval_screen.dart';
 
 class SupervisorDashboard extends StatefulWidget {
   const SupervisorDashboard({Key? key}) : super(key: key);
@@ -644,12 +645,7 @@ class RequestsApprovalPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Text(
-        'requests_approval_page'.tr(context),
-        style: AppTheme.headlineMedium,
-      ),
-    );
+    return const RequestApprovalScreen();
   }
 }
 
