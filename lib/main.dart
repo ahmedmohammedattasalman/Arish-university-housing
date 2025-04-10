@@ -11,25 +11,41 @@ import 'core/localization/app_localizations.dart';
 import 'core/localization/language_provider.dart';
 import 'features/requests/providers/request_provider.dart';
 import 'features/notifications/providers/notification_provider.dart';
+import 'core/services/local_storage_service.dart';
 
 // Preload web fonts to avoid CORS issues
 Future<void> preloadWebFonts(BuildContext context) async {
   if (kIsWeb) {
-    // Force load fonts
     try {
-      // Create a temporary text painter that will use all required fonts
-      final textStyle = TextStyle(fontFamily: 'Poppins');
-      final painter = TextPainter(
-        text: TextSpan(
-          text: 'Font preloader',
-          style: textStyle,
-        ),
-        textDirection: TextDirection.ltr,
-      );
-      painter.layout();
+      // Use a simpler approach that doesn't rely on font files directly
+      debugPrint('Preloading fonts for web...');
 
-      // Use a delayed future to give the browser time to load fonts
-      await Future.delayed(const Duration(milliseconds: 200));
+      // Create a hidden container with text in different fonts
+      // This forces Flutter to preload the fonts from Google CDN
+      final fontPreloader = Container(
+        width: 0,
+        height: 0,
+        child: Column(
+          children: [
+            // Roboto is included with Material Design
+            Text('', style: TextStyle(fontFamily: 'Roboto')),
+            // For UI elements that might use system fonts
+            Text('', style: TextStyle(fontFamily: 'Arial')),
+            Text('', style: TextStyle(fontFamily: 'Segoe UI')),
+            // Wait a brief moment to ensure fonts are processed
+          ],
+        ),
+      );
+
+      // Add the invisible widget to the widget tree
+      if (context.mounted) {
+        Overlay.of(context).insert(
+          OverlayEntry(builder: (context) => fontPreloader),
+        );
+      }
+
+      // Brief delay to allow any font loading to start
+      await Future.delayed(const Duration(milliseconds: 300));
       debugPrint('Fonts preloaded for web');
     } catch (e) {
       // Just log errors, don't crash
@@ -57,6 +73,9 @@ Future<void> initializeApp() async {
 
     // Pre-initialize SharedPreferences
     await SharedPreferences.getInstance();
+
+    // Initialize LocalStorageService (particularly important for web)
+    await LocalStorageService.initialize();
 
     // Initialize Supabase
     final supabaseService = SupabaseService();
@@ -98,16 +117,16 @@ class LoadingApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return const MaterialApp(
       debugShowCheckedModeBanner: false,
       home: Scaffold(
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const CircularProgressIndicator(),
-              const SizedBox(height: 16),
-              const Text(
+              CircularProgressIndicator(),
+              SizedBox(height: 16),
+              Text(
                 'Initializing application...',
                 style: TextStyle(fontSize: 16),
               ),

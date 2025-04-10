@@ -10,7 +10,7 @@ import '../../requests/widgets/request_card.dart';
 import 'request_detail_screen.dart';
 
 class RequestApprovalScreen extends StatefulWidget {
-  const RequestApprovalScreen({Key? key}) : super(key: key);
+  const RequestApprovalScreen({super.key});
 
   @override
   State<RequestApprovalScreen> createState() => _RequestApprovalScreenState();
@@ -44,7 +44,7 @@ class _RequestApprovalScreenState extends State<RequestApprovalScreen> {
     return Scaffold(
       appBar: AppBar(
         title:
-            Text(AppLocalizations.of(context)!.translate('requests_approval')),
+            Text(AppLocalizations.of(context).translate('requests_approval')),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -80,7 +80,7 @@ class _RequestApprovalScreenState extends State<RequestApprovalScreen> {
                 if (pendingRequests.isEmpty) {
                   return Center(
                     child: Text(
-                      AppLocalizations.of(context)!
+                      AppLocalizations.of(context)
                           .translate('no_pending_requests'),
                       style: AppTheme.titleMedium,
                     ),
@@ -104,7 +104,7 @@ class _RequestApprovalScreenState extends State<RequestApprovalScreen> {
                 if (filteredRequests.isEmpty) {
                   return Center(
                     child: Text(
-                      AppLocalizations.of(context)!
+                      AppLocalizations.of(context)
                           .translate('no_matching_requests'),
                       style: AppTheme.titleMedium,
                     ),
@@ -153,7 +153,7 @@ class _RequestApprovalScreenState extends State<RequestApprovalScreen> {
             controller: _searchController,
             decoration: InputDecoration(
               hintText:
-                  AppLocalizations.of(context)!.translate('search_requests'),
+                  AppLocalizations.of(context).translate('search_requests'),
               prefixIcon: const Icon(Icons.search),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
@@ -175,7 +175,7 @@ class _RequestApprovalScreenState extends State<RequestApprovalScreen> {
             child: Row(
               children: [
                 _buildFilterChip(
-                  label: AppLocalizations.of(context)!.translate('all'),
+                  label: AppLocalizations.of(context).translate('all'),
                   selected: _selectedType == null,
                   onSelected: (_) {
                     setState(() {
@@ -185,7 +185,7 @@ class _RequestApprovalScreenState extends State<RequestApprovalScreen> {
                 ),
                 const SizedBox(width: 8),
                 _buildFilterChip(
-                  label: AppLocalizations.of(context)!
+                  label: AppLocalizations.of(context)
                       .translate('vacation_request'),
                   selected: _selectedType == RequestType.vacation,
                   onSelected: (_) {
@@ -196,7 +196,7 @@ class _RequestApprovalScreenState extends State<RequestApprovalScreen> {
                 ),
                 const SizedBox(width: 8),
                 _buildFilterChip(
-                  label: AppLocalizations.of(context)!
+                  label: AppLocalizations.of(context)
                       .translate('eviction_request'),
                   selected: _selectedType == RequestType.eviction,
                   onSelected: (_) {
@@ -207,7 +207,7 @@ class _RequestApprovalScreenState extends State<RequestApprovalScreen> {
                 ),
                 const SizedBox(width: 8),
                 _buildFilterChip(
-                  label: AppLocalizations.of(context)!
+                  label: AppLocalizations.of(context)
                       .translate('maintenance_request'),
                   selected: _selectedType == RequestType.maintenance,
                   onSelected: (_) {
@@ -263,19 +263,19 @@ class _RequestApprovalScreenState extends State<RequestApprovalScreen> {
     bool? result = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(AppLocalizations.of(context)!.translate('approve_request')),
+        title: Text(AppLocalizations.of(context).translate('approve_request')),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(AppLocalizations.of(context)!
+            Text(AppLocalizations.of(context)
                 .translate('approve_request_confirmation')),
             const SizedBox(height: 16),
             TextField(
               controller: notesController,
               decoration: InputDecoration(
                 labelText:
-                    AppLocalizations.of(context)!.translate('approval_notes'),
+                    AppLocalizations.of(context).translate('approval_notes'),
                 border: const OutlineInputBorder(),
               ),
               maxLines: 3,
@@ -285,14 +285,14 @@ class _RequestApprovalScreenState extends State<RequestApprovalScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text(AppLocalizations.of(context)!.translate('cancel')),
+            child: Text(AppLocalizations.of(context).translate('cancel')),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             style: TextButton.styleFrom(
               foregroundColor: Colors.green,
             ),
-            child: Text(AppLocalizations.of(context)!.translate('approve')),
+            child: Text(AppLocalizations.of(context).translate('approve')),
           ),
         ],
       ),
@@ -320,7 +320,7 @@ class _RequestApprovalScreenState extends State<RequestApprovalScreen> {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(AppLocalizations.of(context)!
+                content: Text(AppLocalizations.of(context)
                     .translate('request_approved_success')),
                 backgroundColor: Colors.green,
               ),
@@ -346,19 +346,19 @@ class _RequestApprovalScreenState extends State<RequestApprovalScreen> {
     bool? result = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(AppLocalizations.of(context)!.translate('reject_request')),
+        title: Text(AppLocalizations.of(context).translate('reject_request')),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(AppLocalizations.of(context)!
+            Text(AppLocalizations.of(context)
                 .translate('reject_request_confirmation')),
             const SizedBox(height: 16),
             TextField(
               controller: reasonController,
               decoration: InputDecoration(
                 labelText:
-                    AppLocalizations.of(context)!.translate('rejection_reason'),
+                    AppLocalizations.of(context).translate('rejection_reason'),
                 border: const OutlineInputBorder(),
               ),
               maxLines: 3,
@@ -368,7 +368,7 @@ class _RequestApprovalScreenState extends State<RequestApprovalScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text(AppLocalizations.of(context)!.translate('cancel')),
+            child: Text(AppLocalizations.of(context).translate('cancel')),
           ),
           TextButton(
             onPressed: () {
@@ -377,7 +377,7 @@ class _RequestApprovalScreenState extends State<RequestApprovalScreen> {
               } else {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text(AppLocalizations.of(context)!
+                    content: Text(AppLocalizations.of(context)
                         .translate('rejection_reason_required')),
                     backgroundColor: Colors.red,
                   ),
@@ -387,7 +387,7 @@ class _RequestApprovalScreenState extends State<RequestApprovalScreen> {
             style: TextButton.styleFrom(
               foregroundColor: Colors.red,
             ),
-            child: Text(AppLocalizations.of(context)!.translate('reject')),
+            child: Text(AppLocalizations.of(context).translate('reject')),
           ),
         ],
       ),
@@ -414,7 +414,7 @@ class _RequestApprovalScreenState extends State<RequestApprovalScreen> {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(AppLocalizations.of(context)!
+                content: Text(AppLocalizations.of(context)
                     .translate('request_rejected_success')),
                 backgroundColor: Colors.orange,
               ),

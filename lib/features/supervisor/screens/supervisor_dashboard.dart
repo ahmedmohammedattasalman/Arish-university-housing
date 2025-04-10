@@ -9,7 +9,7 @@ import '../../../core/services/supabase_service.dart';
 import '../../../features/supervisor/screens/request_approval_screen.dart';
 
 class SupervisorDashboard extends StatefulWidget {
-  const SupervisorDashboard({Key? key}) : super(key: key);
+  const SupervisorDashboard({super.key});
 
   @override
   State<SupervisorDashboard> createState() => _SupervisorDashboardState();
@@ -81,7 +81,7 @@ class _SupervisorDashboardState extends State<SupervisorDashboard> {
 }
 
 class SupervisorHomePage extends StatefulWidget {
-  const SupervisorHomePage({Key? key}) : super(key: key);
+  const SupervisorHomePage({super.key});
 
   @override
   State<SupervisorHomePage> createState() => _SupervisorHomePageState();
@@ -256,7 +256,7 @@ class _SupervisorHomePageState extends State<SupervisorHomePage>
                         const SizedBox(width: 6),
                         Expanded(
                           child: Text(
-                            'building'.tr(context) + ': ' + 'Building A',
+                            '${'building'.tr(context)}: Building A',
                             style: AppTheme.bodySmall.copyWith(
                               color: Colors.white,
                             ),
@@ -287,7 +287,7 @@ class _SupervisorHomePageState extends State<SupervisorHomePage>
                         const SizedBox(width: 6),
                         Expanded(
                           child: Text(
-                            'students'.tr(context) + ': 240',
+                            '${'students'.tr(context)}: 240',
                             style: AppTheme.bodySmall.copyWith(
                               color: Colors.white,
                             ),
@@ -598,7 +598,7 @@ class _SupervisorHomePageState extends State<SupervisorHomePage>
                       const SizedBox(height: 6),
                       Row(
                         children: [
-                          Icon(
+                          const Icon(
                             Icons.access_time,
                             size: 14,
                             color: AppTheme.textSecondaryColor,
@@ -641,7 +641,7 @@ class _SupervisorHomePageState extends State<SupervisorHomePage>
 }
 
 class RequestsApprovalPage extends StatelessWidget {
-  const RequestsApprovalPage({Key? key}) : super(key: key);
+  const RequestsApprovalPage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -650,7 +650,7 @@ class RequestsApprovalPage extends StatelessWidget {
 }
 
 class QRGenerationPage extends StatelessWidget {
-  const QRGenerationPage({Key? key}) : super(key: key);
+  const QRGenerationPage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -664,7 +664,7 @@ class QRGenerationPage extends StatelessWidget {
 }
 
 class ProfilePage extends StatelessWidget {
-  const ProfilePage({Key? key}) : super(key: key);
+  const ProfilePage({super.key});
 
   @override
   Widget build(BuildContext context) {

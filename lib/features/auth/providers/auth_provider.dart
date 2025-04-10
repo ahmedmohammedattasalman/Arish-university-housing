@@ -59,6 +59,9 @@ class AuthProvider extends ChangeNotifier {
             _role = userData['user_role'] as String? ?? '';
             debugPrint('Retrieved user_role from profile: $_role');
 
+            // Ensure role is synchronized between metadata and profile
+            await _ensureRoleSynchronization(_role);
+
             // Save the user data to local storage
             await LocalStorageService.saveUserProfile(userData);
             await LocalStorageService.saveAuthState(
@@ -72,10 +75,20 @@ class AuthProvider extends ChangeNotifier {
             // Use cached data if no server data
             _role = cachedAuthState['user_role'] as String?;
             _status = AuthStatus.authenticated;
+
+            // Try to create or update profile with the cached role
+            if (_role != null && _role!.isNotEmpty) {
+              await _createOrUpdateProfile(_role);
+            }
           } else {
             // Fallback to metadata if no cached data
             _role = _user?.userMetadata?['role'] as String? ?? '';
             _status = AuthStatus.authenticated;
+
+            // Try to create or update profile with metadata role
+            if (_role != null && _role!.isNotEmpty) {
+              await _createOrUpdateProfile(_role);
+            }
           }
         } catch (e) {
           debugPrint('Error fetching user profile: $e');
@@ -88,6 +101,11 @@ class AuthProvider extends ChangeNotifier {
             _role = _user?.userMetadata?['role'] as String? ?? '';
           }
           _status = AuthStatus.authenticated;
+
+          // Try to create or update profile with the role we have
+          if (_role != null && _role!.isNotEmpty) {
+            await _createOrUpdateProfile(_role);
+          }
         }
       } else {
         // Check for persisted auth state even if Supabase session is gone
@@ -100,6 +118,11 @@ class AuthProvider extends ChangeNotifier {
             if (_user != null) {
               _role = cachedAuthState['user_role'] as String?;
               _status = AuthStatus.authenticated;
+
+              // Try to create or update profile with cached role
+              if (_role != null && _role!.isNotEmpty) {
+                await _createOrUpdateProfile(_role);
+              }
             } else {
               // Session couldn't be refreshed, clear local state
               await LocalStorageService.clearAuthState();
@@ -165,6 +188,10 @@ class AuthProvider extends ChangeNotifier {
           if (userData != null) {
             // Important: Use user_role from the profiles table
             _role = userData['user_role'] as String? ?? '';
+
+            // Ensure metadata and profile roles are synchronized
+            await _ensureRoleSynchronization(_role);
+
             debugPrint('Retrieved user_role on login: $_role');
 
             // Save user data to local storage
@@ -175,11 +202,18 @@ class AuthProvider extends ChangeNotifier {
               role: _role ?? '',
             );
           } else {
-            // Something went wrong with profile retrieval
-            _role = 'unknown';
-            debugPrint('No user profile data returned after login');
+            // If profile retrieval fails, try to use metadata as fallback
+            _role = _user?.userMetadata?['role'] as String? ?? 'unknown';
+            debugPrint(
+                'No user profile data returned, using metadata role: $_role');
+
+            // Try to create/update profile with metadata role
+            if (_role != 'unknown') {
+              await _createOrUpdateProfile(_role);
+            }
           }
 
+          // Set authenticated status and notify listeners immediately
           _status = AuthStatus.authenticated;
           _safeNotifyListeners();
           return true;
@@ -188,6 +222,13 @@ class AuthProvider extends ChangeNotifier {
           // Still consider login successful even if profile fetch fails
           // Get role from user metadata as fallback
           _role = _user?.userMetadata?['role'] as String? ?? 'unknown';
+          debugPrint('Error retrieving profile, using metadata role: $_role');
+
+          // Try to create/update profile with metadata role
+          if (_role != 'unknown') {
+            await _createOrUpdateProfile(_role);
+          }
+
           _status = AuthStatus.authenticated;
           _safeNotifyListeners();
           return true;
@@ -216,6 +257,85 @@ class AuthProvider extends ChangeNotifier {
 
       _safeNotifyListeners();
       return false;
+    }
+  }
+
+  // Ensure role synchronization between profile and metadata
+  Future<void> _ensureRoleSynchronization(String? profileRole) async {
+    try {
+      if (_user == null || profileRole == null) return;
+
+      // Get current metadata role
+      final metadataRole = _user?.userMetadata?['role'] as String?;
+
+      // If roles don't match, update metadata
+      if (metadataRole != profileRole && profileRole.isNotEmpty) {
+        debugPrint('Syncing metadata role with profile role: $profileRole');
+
+        // Update user metadata with the profile role
+        await _supabaseService.client.auth.updateUser(
+          UserAttributes(
+            data: {
+              'role': profileRole,
+              // Preserve other metadata
+              ..._user?.userMetadata?.map((key, value) =>
+                      MapEntry(key, key == 'role' ? profileRole : value)) ??
+                  {},
+            },
+          ),
+        );
+      }
+      // If profile role is empty but metadata has a role, create/update profile
+      else if (profileRole.isEmpty &&
+          metadataRole != null &&
+          metadataRole.isNotEmpty) {
+        await _createOrUpdateProfile(metadataRole);
+      }
+    } catch (e) {
+      debugPrint('Error syncing roles: $e');
+    }
+  }
+
+  // Create or update the user profile
+  Future<void> _createOrUpdateProfile(String? roleParam) async {
+    try {
+      if (_user == null) return;
+
+      // Ensure role is not null
+      final role = roleParam ?? 'unknown';
+      if (role == 'unknown') {
+        debugPrint(
+            'Warning: Attempting to create/update profile with unknown role');
+      }
+
+      final email = _user!.email ?? '';
+      final fullName = _user?.userMetadata?['full_name']?.toString() ?? '';
+      final phone = _user?.userMetadata?['phone']?.toString() ?? '';
+
+      // Basic profile data
+      final profileData = {
+        'id': _user!.id,
+        'email': email,
+        'user_role': role,
+        'full_name': fullName,
+        'phone': phone,
+      };
+
+      // Try to retrieve existing profile
+      final existingProfile = await _supabaseService.getUserProfile(_user!.id);
+
+      if (existingProfile != null) {
+        // Update existing profile with role
+        await _supabaseService
+            .updateData('profiles', _user!.id, {'user_role': role});
+      } else {
+        // Create new profile
+        await _supabaseService.insertData('profiles', profileData);
+      }
+
+      debugPrint('Profile created/updated with role: $role');
+    } catch (e) {
+      debugPrint('Error creating/updating profile: $e');
     }
   }
 
@@ -339,20 +459,43 @@ class AuthProvider extends ChangeNotifier {
     _safeNotifyListeners();
 
     try {
-      await _supabaseService.signOut();
+      // Clear local storage first to ensure UI can navigate away
       await LocalStorageService.clearAuthState();
       await LocalStorageService.clearUserProfile();
 
+      // Reset local state
       _user = null;
       _role = null;
       _status = AuthStatus.unauthenticated;
-    } catch (e) {
-      debugPrint('Error signing out: $e');
-      _errorMessage = 'Failed to sign out: ${e.toString()}';
-      _status = AuthStatus.error;
-    }
+      _safeNotifyListeners();
 
-    _safeNotifyListeners();
+      // Then try to sign out from Supabase
+      // Even if this fails, the UI will already be in unauthenticated state
+      try {
+        await _supabaseService.signOut();
+      } catch (supabaseError) {
+        // Log but don't change state since we've already cleared local state
+        debugPrint(
+            'Supabase sign out error (UI already updated): $supabaseError');
+      }
+    } catch (e) {
+      debugPrint('Error during sign out process: $e');
+
+      // Even if there's an error, force unauthenticated state
+      _user = null;
+      _role = null;
+      _status = AuthStatus.unauthenticated;
+
+      // Try to clear storage again just in case
+      try {
+        await LocalStorageService.clearAuthState();
+        await LocalStorageService.clearUserProfile();
+      } catch (storageError) {
+        debugPrint('Error clearing storage during fallback: $storageError');
+      }
+
+      _safeNotifyListeners();
+    }
   }
 
   Future<void> refreshUser() async {
@@ -360,20 +503,8 @@ class AuthProvider extends ChangeNotifier {
       _user = await _supabaseService.getCurrentUser();
 
       if (_user != null) {
-        final userData = await _supabaseService.getUserProfile(_user!.id);
-        if (userData != null) {
-          _role = userData['role'] as String? ?? '';
-
-          // Update local storage
-          await LocalStorageService.saveUserProfile(userData);
-          await LocalStorageService.saveAuthState(
-            userId: _user!.id,
-            email: _user!.email ?? '',
-            role: _role ?? '',
-          );
-
-          _safeNotifyListeners();
-        }
+        // Simply delegate to refreshUserRole for consistent logic
+        await refreshUserRole();
       }
     } catch (e) {
       debugPrint('Error refreshing user: $e');
@@ -399,14 +530,56 @@ class AuthProvider extends ChangeNotifier {
         final userData = await _supabaseService.getUserProfile(_user!.id);
         if (userData != null) {
           final newRole = userData['user_role'] as String? ?? '';
+
+          // Ensure metadata and profile roles are synchronized
+          await _ensureRoleSynchronization(newRole);
+
           if (_role != newRole) {
             _role = newRole;
             debugPrint('Updated user role to: $_role');
+
+            // Also update local storage when role changes
+            await LocalStorageService.saveAuthState(
+              userId: _user!.id,
+              email: _user!.email ?? '',
+              role: _role ?? '',
+            );
+            await LocalStorageService.saveUserProfile(userData);
+
+            _safeNotifyListeners();
+          }
+        } else {
+          // If profile not found, try to retrieve role from metadata
+          final metadataRole = _user?.userMetadata?['role'] as String?;
+          if (metadataRole != null &&
+              metadataRole.isNotEmpty &&
+              _role != metadataRole) {
+            debugPrint(
+                'Using role from metadata: $metadataRole (profile not found)');
+            _role = metadataRole;
+
+            // Try to create a profile with this role
+            await _createOrUpdateProfile(metadataRole);
+
             _safeNotifyListeners();
           }
         }
       } catch (e) {
         debugPrint('Error refreshing user role: $e');
+        // Try to use cached role from local storage as fallback
+        try {
+          final cachedAuthState = await LocalStorageService.getAuthState();
+          if (cachedAuthState != null && cachedAuthState['user_role'] != null) {
+            final cachedRole = cachedAuthState['user_role'] as String;
+            if (_role != cachedRole) {
+              _role = cachedRole;
+              debugPrint('Using cached role from local storage: $_role');
+              _safeNotifyListeners();
+            }
+          }
+        } catch (cacheError) {
+          debugPrint('Error retrieving cached role: $cacheError');
+        }
       }
     }
   }

@@ -13,15 +13,15 @@ class RequestDetailScreen extends StatelessWidget {
   final Request request;
 
   const RequestDetailScreen({
-    Key? key,
+    super.key,
     required this.request,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(AppLocalizations.of(context)!.translate('request_details')),
+        title: Text(AppLocalizations.of(context).translate('request_details')),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -80,7 +80,7 @@ class RequestDetailScreen extends StatelessWidget {
                 Expanded(
                   child: _buildInfoItem(
                     context,
-                    AppLocalizations.of(context)!.translate('request_id'),
+                    AppLocalizations.of(context).translate('request_id'),
                     request.id,
                   ),
                 ),
@@ -92,7 +92,7 @@ class RequestDetailScreen extends StatelessWidget {
                 Expanded(
                   child: _buildInfoItem(
                     context,
-                    AppLocalizations.of(context)!.translate('submitted_on'),
+                    AppLocalizations.of(context).translate('submitted_on'),
                     request.formattedCreatedDate,
                   ),
                 ),
@@ -100,7 +100,7 @@ class RequestDetailScreen extends StatelessWidget {
                   Expanded(
                     child: _buildInfoItem(
                       context,
-                      AppLocalizations.of(context)!.translate('last_updated'),
+                      AppLocalizations.of(context).translate('last_updated'),
                       _formatDate(request.updatedAt!),
                     ),
                   ),
@@ -124,7 +124,7 @@ class RequestDetailScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              AppLocalizations.of(context)!.translate('request_details'),
+              AppLocalizations.of(context).translate('request_details'),
               style: AppTheme.titleLarge.copyWith(
                 fontWeight: FontWeight.bold,
               ),
@@ -153,14 +153,14 @@ class RequestDetailScreen extends StatelessWidget {
                 Expanded(
                   child: _buildInfoItem(
                     context,
-                    AppLocalizations.of(context)!.translate('start_date'),
+                    AppLocalizations.of(context).translate('start_date'),
                     startDate,
                   ),
                 ),
                 Expanded(
                   child: _buildInfoItem(
                     context,
-                    AppLocalizations.of(context)!.translate('end_date'),
+                    AppLocalizations.of(context).translate('end_date'),
                     endDate,
                   ),
                 ),
@@ -169,13 +169,13 @@ class RequestDetailScreen extends StatelessWidget {
             const SizedBox(height: 12),
             _buildInfoItem(
               context,
-              AppLocalizations.of(context)!.translate('duration'),
-              '${durationDays ?? 0} ${durationDays == 1 ? AppLocalizations.of(context)!.translate('day') : AppLocalizations.of(context)!.translate('days')}',
+              AppLocalizations.of(context).translate('duration'),
+              '${durationDays ?? 0} ${durationDays == 1 ? AppLocalizations.of(context).translate('day') : AppLocalizations.of(context).translate('days')}',
             ),
             const SizedBox(height: 12),
             _buildInfoItem(
               context,
-              AppLocalizations.of(context)!.translate('reason'),
+              AppLocalizations.of(context).translate('reason'),
               reason,
             ),
           ],
@@ -190,13 +190,13 @@ class RequestDetailScreen extends StatelessWidget {
           children: [
             _buildInfoItem(
               context,
-              AppLocalizations.of(context)!.translate('date'),
+              AppLocalizations.of(context).translate('date'),
               date,
             ),
             const SizedBox(height: 12),
             _buildInfoItem(
               context,
-              AppLocalizations.of(context)!.translate('reason'),
+              AppLocalizations.of(context).translate('reason'),
               reason,
             ),
           ],
@@ -215,14 +215,14 @@ class RequestDetailScreen extends StatelessWidget {
                 Expanded(
                   child: _buildInfoItem(
                     context,
-                    AppLocalizations.of(context)!.translate('location'),
+                    AppLocalizations.of(context).translate('location'),
                     location,
                   ),
                 ),
                 Expanded(
                   child: _buildInfoItem(
                     context,
-                    AppLocalizations.of(context)!.translate('priority'),
+                    AppLocalizations.of(context).translate('priority'),
                     priority,
                   ),
                 ),
@@ -231,7 +231,7 @@ class RequestDetailScreen extends StatelessWidget {
             const SizedBox(height: 12),
             _buildInfoItem(
               context,
-              AppLocalizations.of(context)!.translate('issue'),
+              AppLocalizations.of(context).translate('issue'),
               issue,
             ),
           ],
@@ -239,7 +239,7 @@ class RequestDetailScreen extends StatelessWidget {
 
       default:
         return Text(
-          AppLocalizations.of(context)!.translate('no_details_available'),
+          AppLocalizations.of(context).translate('no_details_available'),
           style: AppTheme.bodyMedium,
         );
     }
@@ -257,7 +257,7 @@ class RequestDetailScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              AppLocalizations.of(context)!.translate('student_info'),
+              AppLocalizations.of(context).translate('student_info'),
               style: AppTheme.titleLarge.copyWith(
                 fontWeight: FontWeight.bold,
               ),
@@ -265,7 +265,7 @@ class RequestDetailScreen extends StatelessWidget {
             const SizedBox(height: 16),
             _buildInfoItem(
               context,
-              AppLocalizations.of(context)!.translate('student_id'),
+              AppLocalizations.of(context).translate('student_id'),
               request.userId,
               showCopyOption: true,
             ),
@@ -290,9 +290,8 @@ class RequestDetailScreen extends StatelessWidget {
           children: [
             Text(
               request.status == RequestStatus.approved
-                  ? AppLocalizations.of(context)!.translate('approval_details')
-                  : AppLocalizations.of(context)!
-                      .translate('rejection_details'),
+                  ? AppLocalizations.of(context).translate('approval_details')
+                  : AppLocalizations.of(context).translate('rejection_details'),
               style: AppTheme.titleLarge.copyWith(
                 fontWeight: FontWeight.bold,
               ),
@@ -301,7 +300,7 @@ class RequestDetailScreen extends StatelessWidget {
             if (request.supervisorId != null)
               _buildInfoItem(
                 context,
-                AppLocalizations.of(context)!.translate('supervisor_id'),
+                AppLocalizations.of(context).translate('supervisor_id'),
                 request.supervisorId!,
                 showCopyOption: true,
               ),
@@ -310,8 +309,8 @@ class RequestDetailScreen extends StatelessWidget {
               _buildInfoItem(
                 context,
                 request.status == RequestStatus.approved
-                    ? AppLocalizations.of(context)!.translate('approval_notes')
-                    : AppLocalizations.of(context)!
+                    ? AppLocalizations.of(context).translate('approval_notes')
+                    : AppLocalizations.of(context)
                         .translate('rejection_reason'),
                 request.notes!,
               ),
@@ -333,7 +332,7 @@ class RequestDetailScreen extends StatelessWidget {
               side: const BorderSide(color: Colors.red),
               padding: const EdgeInsets.symmetric(vertical: 16),
             ),
-            child: Text(AppLocalizations.of(context)!.translate('reject')),
+            child: Text(AppLocalizations.of(context).translate('reject')),
           ),
         ),
         const SizedBox(width: 16),
@@ -345,7 +344,7 @@ class RequestDetailScreen extends StatelessWidget {
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 16),
             ),
-            child: Text(AppLocalizations.of(context)!.translate('approve')),
+            child: Text(AppLocalizations.of(context).translate('approve')),
           ),
         ),
       ],
@@ -359,19 +358,19 @@ class RequestDetailScreen extends StatelessWidget {
     switch (request.status) {
       case RequestStatus.pending:
         badgeColor = Colors.orange;
-        statusText = AppLocalizations.of(context)!.translate('pending');
+        statusText = AppLocalizations.of(context).translate('pending');
         break;
       case RequestStatus.approved:
         badgeColor = Colors.green;
-        statusText = AppLocalizations.of(context)!.translate('approved');
+        statusText = AppLocalizations.of(context).translate('approved');
         break;
       case RequestStatus.rejected:
         badgeColor = Colors.red;
-        statusText = AppLocalizations.of(context)!.translate('rejected');
+        statusText = AppLocalizations.of(context).translate('rejected');
         break;
       case RequestStatus.canceled:
         badgeColor = Colors.grey;
-        statusText = AppLocalizations.of(context)!.translate('canceled');
+        statusText = AppLocalizations.of(context).translate('canceled');
         break;
     }
 
@@ -424,8 +423,8 @@ class RequestDetailScreen extends StatelessWidget {
                   // Copy to clipboard functionality
                   _copyToClipboard(context, value);
                 },
-                tooltip: AppLocalizations.of(context)!
-                    .translate('copy_to_clipboard'),
+                tooltip:
+                    AppLocalizations.of(context).translate('copy_to_clipboard'),
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(),
               ),
@@ -439,8 +438,8 @@ class RequestDetailScreen extends StatelessWidget {
     // Clipboard functionality would be implemented here
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(
-            AppLocalizations.of(context)!.translate('copied_to_clipboard')),
+        content:
+            Text(AppLocalizations.of(context).translate('copied_to_clipboard')),
         duration: const Duration(seconds: 2),
       ),
     );
@@ -451,19 +450,19 @@ class RequestDetailScreen extends StatelessWidget {
     bool? result = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(AppLocalizations.of(context)!.translate('approve_request')),
+        title: Text(AppLocalizations.of(context).translate('approve_request')),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(AppLocalizations.of(context)!
+            Text(AppLocalizations.of(context)
                 .translate('approve_request_confirmation')),
             const SizedBox(height: 16),
             TextField(
               controller: notesController,
               decoration: InputDecoration(
                 labelText:
-                    AppLocalizations.of(context)!.translate('approval_notes'),
+                    AppLocalizations.of(context).translate('approval_notes'),
                 border: const OutlineInputBorder(),
               ),
               maxLines: 3,
@@ -473,14 +472,14 @@ class RequestDetailScreen extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text(AppLocalizations.of(context)!.translate('cancel')),
+            child: Text(AppLocalizations.of(context).translate('cancel')),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             style: TextButton.styleFrom(
               foregroundColor: Colors.green,
             ),
-            child: Text(AppLocalizations.of(context)!.translate('approve')),
+            child: Text(AppLocalizations.of(context).translate('approve')),
           ),
         ],
       ),
@@ -508,7 +507,7 @@ class RequestDetailScreen extends StatelessWidget {
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(AppLocalizations.of(context)!
+                content: Text(AppLocalizations.of(context)
                     .translate('request_approved_success')),
                 backgroundColor: Colors.green,
               ),
@@ -535,19 +534,19 @@ class RequestDetailScreen extends StatelessWidget {
     bool? result = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(AppLocalizations.of(context)!.translate('reject_request')),
+        title: Text(AppLocalizations.of(context).translate('reject_request')),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(AppLocalizations.of(context)!
+            Text(AppLocalizations.of(context)
                 .translate('reject_request_confirmation')),
             const SizedBox(height: 16),
             TextField(
               controller: reasonController,
               decoration: InputDecoration(
                 labelText:
-                    AppLocalizations.of(context)!.translate('rejection_reason'),
+                    AppLocalizations.of(context).translate('rejection_reason'),
                 border: const OutlineInputBorder(),
               ),
               maxLines: 3,
@@ -557,7 +556,7 @@ class RequestDetailScreen extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text(AppLocalizations.of(context)!.translate('cancel')),
+            child: Text(AppLocalizations.of(context).translate('cancel')),
           ),
           TextButton(
             onPressed: () {
@@ -566,7 +565,7 @@ class RequestDetailScreen extends StatelessWidget {
               } else {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text(AppLocalizations.of(context)!
+                    content: Text(AppLocalizations.of(context)
                         .translate('rejection_reason_required')),
                     backgroundColor: Colors.red,
                   ),
@@ -576,7 +575,7 @@ class RequestDetailScreen extends StatelessWidget {
             style: TextButton.styleFrom(
               foregroundColor: Colors.red,
             ),
-            child: Text(AppLocalizations.of(context)!.translate('reject')),
+            child: Text(AppLocalizations.of(context).translate('reject')),
           ),
         ],
       ),
@@ -603,7 +602,7 @@ class RequestDetailScreen extends StatelessWidget {
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(AppLocalizations.of(context)!
+                content: Text(AppLocalizations.of(context)
                     .translate('request_rejected_success')),
                 backgroundColor: Colors.orange,
               ),
@@ -641,13 +640,13 @@ class RequestDetailScreen extends StatelessWidget {
   String _getRequestTypeString(BuildContext context) {
     switch (request.type) {
       case RequestType.vacation:
-        return AppLocalizations.of(context)!.translate('vacation_request');
+        return AppLocalizations.of(context).translate('vacation_request');
       case RequestType.eviction:
-        return AppLocalizations.of(context)!.translate('eviction_request');
+        return AppLocalizations.of(context).translate('eviction_request');
       case RequestType.maintenance:
-        return AppLocalizations.of(context)!.translate('maintenance_request');
+        return AppLocalizations.of(context).translate('maintenance_request');
       case RequestType.other:
-        return AppLocalizations.of(context)!.translate('other_request');
+        return AppLocalizations.of(context).translate('other_request');
     }
   }
 

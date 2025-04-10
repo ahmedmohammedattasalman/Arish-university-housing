@@ -6,6 +6,12 @@ import '../../../core/utils/validators.dart';
 import '../providers/auth_provider.dart';
 import '../../../core/widgets/language_toggle_button.dart';
 import '../../../core/localization/string_extensions.dart';
+import '../../../core/config/constants.dart';
+import '../../student/screens/student_dashboard.dart';
+import '../../supervisor/screens/supervisor_dashboard.dart';
+import '../../admin/screens/admin_dashboard.dart';
+import '../../labor/screens/labor_dashboard.dart';
+import '../../restaurant/screens/restaurant_dashboard.dart';
 
 class LoginScreen extends StatefulWidget {
   final VoidCallback onSignUpPressed;
@@ -109,6 +115,21 @@ class _LoginScreenState extends State<LoginScreen>
           _needsEmailVerification = false;
         });
 
+        // Show loading dialog
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => AlertDialog(
+            content: Row(
+              children: [
+                const CircularProgressIndicator(),
+                const SizedBox(width: 20),
+                Text('signing_in'.tr(context)),
+              ],
+            ),
+          ),
+        );
+
         final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
         final success = await authProvider.signIn(
@@ -116,20 +137,40 @@ class _LoginScreenState extends State<LoginScreen>
           _passwordController.text.trim(),
         );
 
+        // Close loading dialog
+        if (mounted && Navigator.canPop(context)) {
+          Navigator.pop(context);
+        }
+
         if (!mounted) return;
 
         if (success) {
-          // Show success message and ensure proper navigation happens
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Login successful! Welcome back.'),
-              backgroundColor: Colors.green,
+          // Show loading profile dialog
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (context) => AlertDialog(
+              content: Row(
+                children: [
+                  const CircularProgressIndicator(),
+                  const SizedBox(width: 20),
+                  Text('loading_profile'.tr(context)),
+                ],
+              ),
             ),
           );
 
-          // Ensure the user's role is properly set
-          if (authProvider.role == null || authProvider.role!.isEmpty) {
-            await authProvider.refreshUser();
+          // Ensure the user's role is properly set and synchronized
+          await authProvider.refreshUserRole();
+
+          // Close loading dialog
+          if (mounted && Navigator.canPop(context)) {
+            Navigator.pop(context);
+          }
+
+          // Navigate to appropriate dashboard based on the user's role
+          if (mounted) {
+            _navigateToDashboard(authProvider.role);
           }
         } else {
           // Check if the error is about email confirmation
@@ -141,22 +182,28 @@ class _LoginScreenState extends State<LoginScreen>
               setState(() {
                 _needsEmailVerification = true;
               });
+              _showVerificationDialog();
             }
-          }
-
-          // Show error message
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(errorMsg != ''
-                    ? errorMsg
-                    : 'Login failed. Please check your credentials.'),
-                backgroundColor: AppTheme.errorColor,
-              ),
-            );
+          } else {
+            // Show error message
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(errorMsg != ''
+                      ? errorMsg
+                      : 'Login failed. Please check your credentials.'),
+                  backgroundColor: AppTheme.errorColor,
+                ),
+              );
+            }
           }
         }
       } catch (e) {
+        // Close loading dialog if it's showing
+        if (mounted && Navigator.canPop(context)) {
+          Navigator.pop(context);
+        }
+
         if (mounted) {
           // Show generic error message if exception is thrown
           ScaffoldMessenger.of(context).showSnackBar(
@@ -168,6 +215,67 @@ class _LoginScreenState extends State<LoginScreen>
         }
       }
     }
+  }
+
+  // Helper method to navigate to the appropriate dashboard based on role
+  void _navigateToDashboard(String? role) {
+    if (!mounted) return;
+
+    Widget dashboard;
+    String dashboardTitle = '';
+
+    switch (role) {
+      case AppConstants.roleStudent:
+        dashboard = const StudentDashboard();
+        dashboardTitle = 'student_dashboard'.tr(context);
+        break;
+      case AppConstants.roleSupervisor:
+        dashboard = const SupervisorDashboard();
+        dashboardTitle = 'supervisor_dashboard'.tr(context);
+        break;
+      case AppConstants.roleAdmin:
+        dashboard = const AdminDashboard();
+        dashboardTitle = 'admin_dashboard'.tr(context);
+        break;
+      case AppConstants.roleLabor:
+        dashboard = const LaborDashboard();
+        dashboardTitle = 'labor_dashboard'.tr(context);
+        break;
+      case AppConstants.roleRestaurant:
+        dashboard = const RestaurantDashboard();
+        dashboardTitle = 'restaurant_dashboard'.tr(context);
+        break;
+      default:
+        // If role is not recognized, show an error and don't navigate
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+                'Unable to determine user role. Please contact the administrator.'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+        return;
+    }
+
+    // Use pushAndRemoveUntil to remove all previous screens from the stack
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (context) => dashboard),
+      (Route<dynamic> route) => false, // Remove all routes
+    );
+
+    // Show welcome message
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Welcome to $dashboardTitle'),
+            duration: const Duration(seconds: 2),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    });
   }
 
   @override
@@ -318,25 +426,29 @@ class _LoginScreenState extends State<LoginScreen>
                                   duration: const Duration(milliseconds: 800),
                                   delay: const Duration(milliseconds: 800),
                                   child: Row(
+                                    mainAxisSize: MainAxisSize.min,
                                     mainAxisAlignment: MainAxisAlignment.end,
                                     children: [
-                                      TextButton(
-                                        onPressed: isLoading
-                                            ? null
-                                            : () {
-                                                // TODO: Implement forgot password
-                                              },
-                                        style: TextButton.styleFrom(
-                                          foregroundColor:
-                                              AppTheme.primaryColor,
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 8, vertical: 4),
-                                        ),
-                                        child: Text(
-                                          'forget_password'.tr(context),
-                                          style: AppTheme.bodyMedium.copyWith(
-                                            color: AppTheme.primaryColor,
-                                            fontWeight: FontWeight.w600,
+                                      Flexible(
+                                        child: TextButton(
+                                          onPressed: isLoading
+                                              ? null
+                                              : () {
+                                                  // TODO: Implement forgot password
+                                                },
+                                          style: TextButton.styleFrom(
+                                            foregroundColor:
+                                                AppTheme.primaryColor,
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 8, vertical: 4),
+                                          ),
+                                          child: Text(
+                                            'forget_password'.tr(context),
+                                            style: AppTheme.bodyMedium.copyWith(
+                                              color: AppTheme.primaryColor,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                            overflow: TextOverflow.ellipsis,
                                           ),
                                         ),
                                       ),
@@ -369,7 +481,7 @@ class _LoginScreenState extends State<LoginScreen>
                                         ),
                                         Padding(
                                           padding: const EdgeInsets.symmetric(
-                                              horizontal: 16.0),
+                                              horizontal: 8.0),
                                           child: Text(
                                             'or'.tr(context),
                                             style: TextStyle(
@@ -396,21 +508,28 @@ class _LoginScreenState extends State<LoginScreen>
                                   duration: const Duration(milliseconds: 800),
                                   delay: const Duration(milliseconds: 1100),
                                   child: Row(
+                                    mainAxisSize: MainAxisSize.min,
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      Text(
-                                        'no_account'.tr(context),
-                                        style: AppTheme.bodyMedium,
-                                      ),
-                                      TextButton(
-                                        onPressed: isLoading
-                                            ? null
-                                            : widget.onSignUpPressed,
+                                      Flexible(
                                         child: Text(
-                                          'register'.tr(context),
-                                          style: AppTheme.bodyMedium.copyWith(
-                                            color: AppTheme.primaryColor,
-                                            fontWeight: FontWeight.bold,
+                                          'no_account'.tr(context),
+                                          style: AppTheme.bodyMedium,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                      Flexible(
+                                        child: TextButton(
+                                          onPressed: isLoading
+                                              ? null
+                                              : widget.onSignUpPressed,
+                                          child: Text(
+                                            'register'.tr(context),
+                                            style: AppTheme.bodyMedium.copyWith(
+                                              color: AppTheme.primaryColor,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                            overflow: TextOverflow.ellipsis,
                                           ),
                                         ),
                                       ),
@@ -618,6 +737,7 @@ class _LoginScreenState extends State<LoginScreen>
           elevation: 2,
         ),
         child: Row(
+          mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             if (isLoading)
@@ -631,18 +751,57 @@ class _LoginScreenState extends State<LoginScreen>
                 ),
               )
             else
-              const Icon(Icons.login_rounded, size: 22, color: Colors.white),
+              const Icon(Icons.login_rounded, size: 20, color: Colors.white),
             const SizedBox(width: 8),
-            Text(
-              isLoading ? 'loading'.tr(context) : 'login'.tr(context),
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 0.5,
+            Flexible(
+              child: Text(
+                isLoading ? 'loading'.tr(context) : 'login'.tr(context),
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.5,
+                ),
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _showVerificationDialog() {
+    if (!mounted) return;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            const Icon(Icons.warning_amber_rounded, color: Colors.amber),
+            const SizedBox(width: 8),
+            Text('email_not_verified'.tr(context)),
+          ],
+        ),
+        content: Text('check_inbox'.tr(context)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('close'.tr(context)),
+          ),
+          ElevatedButton.icon(
+            onPressed: () {
+              Navigator.pop(context);
+              _resendVerificationEmail();
+            },
+            icon: const Icon(Icons.refresh, size: 18),
+            label: Text('resend_verification'.tr(context)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.amber,
+              foregroundColor: Colors.black87,
+            ),
+          ),
+        ],
       ),
     );
   }

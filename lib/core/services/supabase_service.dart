@@ -247,17 +247,55 @@ class SupabaseService {
 
   Future<AuthResponse> signIn(
       {required String email, required String password}) async {
-    try {
-      final response = await _client.auth.signInWithPassword(
-        email: email,
-        password: password,
-      );
+    debugPrint('Attempting to sign in user: $email');
 
-      return response;
+    try {
+      // Add retry logic for better reliability
+      int retryCount = 0;
+      const maxRetries = 2;
+
+      while (retryCount <= maxRetries) {
+        try {
+          final response = await _client.auth.signInWithPassword(
+            email: email,
+            password: password,
+          );
+
+          debugPrint('Login successful');
+          return response;
+        } catch (signInError) {
+          // Check if it's worth retrying (network errors mainly)
+          if (signInError.toString().contains('500')) {
+            debugPrint('Supabase 500 error, retry attempt ${retryCount + 1}');
+
+            // If we've already retried the maximum times, rethrow
+            if (retryCount >= maxRetries) {
+              throw Exception(
+                  'The authentication server is temporarily unavailable. Please try again in a few moments.');
+            }
+
+            // Wait before retrying (exponential backoff)
+            await Future.delayed(
+                Duration(milliseconds: 500 * (retryCount + 1)));
+            retryCount++;
+          } else {
+            // For non-network errors, don't retry
+            rethrow;
+          }
+        }
+      }
+
+      // This should never happen, but just in case
+      throw Exception('Authentication failed after retries');
     } catch (e) {
+      debugPrint('Sign in error: $e');
+
       if (e.toString().contains('email_not_confirmed')) {
         throw Exception(
             'Your email is not confirmed. Please check your inbox and confirm your email before logging in.');
+      } else if (e.toString().contains('500')) {
+        throw Exception(
+            'The authentication server is temporarily unavailable. Please try again in a few moments.');
       } else {
         // Handle error and rethrow with more useful message
         throw Exception('Login failed: ${e.toString()}');
@@ -266,7 +304,22 @@ class SupabaseService {
   }
 
   Future<void> signOut() async {
-    await _client.auth.signOut();
+    try {
+      // Clear local session storage first
+      await _client.auth.signOut(scope: SignOutScope.local);
+
+      // Then try to clear session from server
+      try {
+        await _client.auth.signOut(scope: SignOutScope.global);
+      } catch (serverError) {
+        // Ignore server-side signout errors as we've already cleared locally
+        debugPrint('Server-side sign out error (safe to ignore): $serverError');
+      }
+    } catch (e) {
+      debugPrint('Error during sign out: $e');
+      // Don't rethrow - always consider signout successful even if there's an error
+      // because we want the UI to go back to login screen
+    }
   }
 
   // User methods

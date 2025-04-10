@@ -6,7 +6,7 @@ import '../../../core/utils/arabic_text_utils.dart';
 import '../../../features/auth/providers/auth_provider.dart';
 
 class CreateVacationRequestScreen extends StatefulWidget {
-  const CreateVacationRequestScreen({Key? key}) : super(key: key);
+  const CreateVacationRequestScreen({super.key});
 
   @override
   State<CreateVacationRequestScreen> createState() =>
